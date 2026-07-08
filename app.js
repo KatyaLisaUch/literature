@@ -9,6 +9,8 @@ const state = {
 const els = {
   studentsFile: document.getElementById("studentsFile"),
   poemsFile: document.getElementById("poemsFile"),
+  downloadStudentsTemplateBtn: document.getElementById("downloadStudentsTemplateBtn"),
+  downloadPoemsTemplateBtn: document.getElementById("downloadPoemsTemplateBtn"),
   poemForm: document.getElementById("poemForm"),
   classFilter: document.getElementById("classFilter"),
   poemFilter: document.getElementById("poemFilter"),
@@ -414,6 +416,51 @@ function exportWorkbook() {
   XLSX.writeFile(workbook, "uchet-stihov.xlsx");
 }
 
+function ensureXlsxLoaded() {
+  if (window.XLSX) return true;
+  alert("Библиотека Excel еще не загрузилась. Обновите страницу и попробуйте снова.");
+  return false;
+}
+
+function downloadTemplate(type) {
+  if (!ensureXlsxLoaded()) return;
+
+  const workbook = XLSX.utils.book_new();
+  const rows = type === "students"
+    ? [
+        { "ФИО": "Петров Петр Петрович", "Класс": "5-Т" },
+        { "ФИО": "Иванова Анна Сергеевна", "Класс": "5-Т" },
+        { "ФИО": "Сидоров Иван Алексеевич", "Класс": "10-А" }
+      ]
+    : [
+        {
+          "Название": "Бородино",
+          "Автор": "М. Ю. Лермонтов",
+          "Класс": "5",
+          "Дата начала сдачи": "2026-09-01",
+          "Дата окончания сдачи": "2026-09-15"
+        },
+        {
+          "Название": "Зимнее утро",
+          "Автор": "А. С. Пушкин",
+          "Класс": "5",
+          "Дата начала сдачи": "2026-10-01",
+          "Дата окончания сдачи": "2026-10-15"
+        },
+        {
+          "Название": "Письмо к женщине",
+          "Автор": "С. А. Есенин",
+          "Класс": "10",
+          "Дата начала сдачи": "2026-11-01",
+          "Дата окончания сдачи": "2026-11-20"
+        }
+      ];
+
+  const sheet = XLSX.utils.json_to_sheet(rows);
+  XLSX.utils.book_append_sheet(workbook, sheet, type === "students" ? "Ученики" : "Стихи");
+  XLSX.writeFile(workbook, type === "students" ? "shablon-uchenikov.xlsx" : "shablon-stihov.xlsx");
+}
+
 els.studentsFile.addEventListener("change", (event) => {
   const file = event.target.files[0];
   if (file) importStudents(file).catch((error) => alert(`Не удалось импортировать учеников: ${error.message}`));
@@ -434,6 +481,8 @@ els.poemForm.addEventListener("submit", (event) => {
 
 els.classFilter.addEventListener("change", render);
 els.poemFilter.addEventListener("change", renderPoemReport);
+els.downloadStudentsTemplateBtn.addEventListener("click", () => downloadTemplate("students"));
+els.downloadPoemsTemplateBtn.addEventListener("click", () => downloadTemplate("poems"));
 els.exportWorkbookBtn.addEventListener("click", exportWorkbook);
 els.clearDataBtn.addEventListener("click", () => {
   if (!confirm("Удалить все данные из этого браузера?")) return;

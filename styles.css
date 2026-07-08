@@ -157,6 +157,13 @@ label {
   line-height: 1.4;
 }
 
+.template-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(120px, 1fr));
@@ -302,6 +309,10 @@ tr:last-child td {
   }
 
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .template-actions {
     grid-template-columns: 1fr;
   }
 }
