@@ -14,12 +14,15 @@ const HEADERS = {
   Sessions: ["token", "teacherId", "expiresAt"]
 };
 
+const SCRIPT_PROPS = PropertiesService.getScriptProperties();
+
 function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     ensureStructure();
 
     if (body.action === "login") return json(login(body.login, body.password));
+    if (body.action === "registerTeacher") return json(registerTeacher(body));
     if (body.action === "getData") return json(getDataByToken(body.token));
     if (body.action === "saveAll") return json(saveAll(body.token, body.data));
 
@@ -32,6 +35,15 @@ function doPost(e) {
 function setupInitialData() {
   ensureStructure();
   createTeacher("teacher1", "123456", "Первый учитель");
+  if (!SCRIPT_PROPS.getProperty("ADMIN_PASSWORD_HASH")) {
+    setAdminPassword("admin123");
+  }
+}
+
+function setAdminPassword(password) {
+  const salt = id("adminsalt");
+  SCRIPT_PROPS.setProperty("ADMIN_PASSWORD_SALT", salt);
+  SCRIPT_PROPS.setProperty("ADMIN_PASSWORD_HASH", hashPassword(password, salt));
 }
 
 function createTeacher(login, password, teacherName) {
@@ -55,6 +67,45 @@ function createTeacher(login, password, teacherName) {
     "TRUE"
   ]);
   return teacherId;
+}
+
+function registerTeacher(body) {
+  const adminPassword = text(body.adminPassword);
+  const loginValue = text(body.login).toLowerCase();
+  const password = text(body.password);
+  const teacherName = text(body.teacherName);
+
+  if (!adminPassword || !loginValue || !password || !teacherName) {
+    throw new Error("Заполните админ-пароль, логин, пароль и ФИО учителя.");
+  }
+
+  if (!isAdminPasswordValid(adminPassword)) {
+    throw new Error("Неверный админ-пароль.");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Пароль учителя должен быть не короче 6 символов.");
+  }
+
+  const teacherId = createTeacher(loginValue, password, teacherName);
+  return {
+    ok: true,
+    teacherId,
+    teacherName
+  };
+}
+
+function isAdminPasswordValid(password) {
+  const salt = SCRIPT_PROPS.getProperty("ADMIN_PASSWORD_SALT");
+  const hash = SCRIPT_PROPS.getProperty("ADMIN_PASSWORD_HASH");
+  if (!salt || !hash) {
+    throw new Error("Админ-пароль не настроен. Запустите setAdminPasswordOnce.");
+  }
+  return hashPassword(password, salt) === hash;
+}
+
+function setAdminPasswordOnce() {
+  setAdminPassword("admin123");
 }
 
 function login(loginValue, password) {
