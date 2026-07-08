@@ -31,10 +31,6 @@
           <h2>Google Sheets</h2>
           <form id="loginForm" class="stack">
             <label>
-              URL Google Apps Script для администратора
-              <input id="apiUrlInput" name="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
-            </label>
-            <label>
               Логин
               <input name="login" autocomplete="username">
             </label>
@@ -44,7 +40,19 @@
             </label>
             <button type="submit" class="primary">Войти</button>
           </form>
-          <p id="cloudStatus" class="hint">Ссылка на Google Apps Script уже указана. Изменяйте ее только при новом развертывании.</p>
+          <p id="cloudStatus" class="hint">Введите логин и пароль учителя.</p>
+        </section>
+
+        <section id="adminSettingsPanel" class="panel" hidden>
+          <h2>Настройки администратора</h2>
+          <form id="adminSettingsForm" class="stack">
+            <label>
+              URL Google Apps Script
+              <input id="apiUrlInput" name="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+            </label>
+            <button type="submit">Сохранить ссылку</button>
+          </form>
+          <p class="hint">Этот блок виден только учителю с логином katyalisa.</p>
         </section>
 
         <section id="registerPanel" class="panel">

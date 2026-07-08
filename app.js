@@ -21,12 +21,15 @@ const cloud = {
   apiUrl: "",
   token: "",
   teacherId: "",
+  login: "",
   teacherName: ""
 };
 
 const els = {
   loginForm: document.getElementById("loginForm"),
   loginPanel: document.getElementById("loginPanel"),
+  adminSettingsForm: document.getElementById("adminSettingsForm"),
+  adminSettingsPanel: document.getElementById("adminSettingsPanel"),
   registerForm: document.getElementById("registerForm"),
   registerPanel: document.getElementById("registerPanel"),
   apiUrlInput: document.getElementById("apiUrlInput"),
@@ -159,6 +162,7 @@ function loadCloudSettings() {
     cloud.apiUrl = normalizeText(settings.apiUrl) || DEFAULT_API_URL;
     cloud.token = normalizeText(session.token);
     cloud.teacherId = normalizeText(session.teacherId);
+    cloud.login = normalizeText(session.login);
     cloud.teacherName = normalizeText(session.teacherName);
     els.apiUrlInput.value = cloud.apiUrl;
     updateCloudStatus();
@@ -176,6 +180,7 @@ function saveCloudSettings() {
   localStorage.setItem(CLOUD_SESSION_KEY, JSON.stringify({
     token: cloud.token,
     teacherId: cloud.teacherId,
+    login: cloud.login,
     teacherName: cloud.teacherName
   }));
 }
@@ -183,6 +188,7 @@ function saveCloudSettings() {
 function clearCloudSession() {
   cloud.token = "";
   cloud.teacherId = "";
+  cloud.login = "";
   cloud.teacherName = "";
   localStorage.removeItem(CLOUD_SESSION_KEY);
   updateCloudStatus();
@@ -190,6 +196,7 @@ function clearCloudSession() {
 
 function updateCloudStatus(message) {
   const teacherLabel = cloud.teacherName || cloud.teacherId;
+  const isAdmin = cloud.login.toLowerCase() === "katyalisa";
   els.teacherBadge.hidden = !cloud.token;
   els.teacherBadge.textContent = cloud.token ? `Текущий учитель: ${teacherLabel}` : "";
 
@@ -205,6 +212,7 @@ function updateCloudStatus(message) {
   els.logoutBtn.hidden = !cloud.token;
   els.loginPanel.hidden = !!cloud.token;
   els.registerPanel.hidden = !!cloud.token;
+  els.adminSettingsPanel.hidden = !isAdmin;
 }
 
 async function apiRequest(action, payload = {}) {
@@ -268,7 +276,7 @@ async function saveCloudNow() {
 }
 
 async function loginToCloud(formData) {
-  cloud.apiUrl = normalizeText(formData.get("apiUrl"));
+  cloud.apiUrl = normalizeText(els.apiUrlInput.value) || cloud.apiUrl || DEFAULT_API_URL;
   const login = normalizeText(formData.get("login"));
   const password = normalizeText(formData.get("password"));
 
@@ -284,6 +292,7 @@ async function loginToCloud(formData) {
     const result = await apiRequest("login", { login, password });
     cloud.token = result.token;
     cloud.teacherId = result.teacherId;
+    cloud.login = result.login || login;
     cloud.teacherName = result.teacherName;
     saveCloudSettings();
     applyRemoteData(result.data);
@@ -294,6 +303,18 @@ async function loginToCloud(formData) {
     clearCloudSession();
     updateCloudStatus(`Ошибка входа: ${error.message}`);
   }
+}
+
+function saveAdminSettings(formData) {
+  if (cloud.login.toLowerCase() !== "katyalisa") return;
+  const apiUrl = normalizeText(formData.get("apiUrl"));
+  if (!apiUrl) {
+    alert("Укажите URL Google Apps Script.");
+    return;
+  }
+  cloud.apiUrl = apiUrl;
+  localStorage.setItem(CLOUD_SETTINGS_KEY, JSON.stringify({ apiUrl: cloud.apiUrl }));
+  updateCloudStatus("Ссылка Google Apps Script сохранена.");
 }
 
 async function registerTeacher(formData) {
@@ -801,6 +822,11 @@ els.poemForm.addEventListener("submit", (event) => {
 els.loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   loginToCloud(new FormData(event.currentTarget));
+});
+
+els.adminSettingsForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveAdminSettings(new FormData(event.currentTarget));
 });
 
 els.registerForm.addEventListener("submit", (event) => {
