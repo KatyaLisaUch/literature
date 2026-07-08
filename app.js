@@ -27,6 +27,7 @@ const els = {
   loginForm: document.getElementById("loginForm"),
   apiUrlInput: document.getElementById("apiUrlInput"),
   cloudStatus: document.getElementById("cloudStatus"),
+  teacherBadge: document.getElementById("teacherBadge"),
   logoutBtn: document.getElementById("logoutBtn"),
   dataFileInput: document.getElementById("dataFileInput"),
   dataFileStatus: document.getElementById("dataFileStatus"),
@@ -181,10 +182,14 @@ function clearCloudSession() {
 }
 
 function updateCloudStatus(message) {
+  const teacherLabel = cloud.teacherName || cloud.teacherId;
+  els.teacherBadge.hidden = !cloud.token;
+  els.teacherBadge.textContent = cloud.token ? `Текущий учитель: ${teacherLabel}` : "";
+
   if (message) {
-    els.cloudStatus.textContent = message;
+    els.cloudStatus.textContent = cloud.token ? `${message} Аккаунт: ${teacherLabel}.` : message;
   } else if (cloud.token) {
-    els.cloudStatus.textContent = `Вход выполнен: ${cloud.teacherName || cloud.teacherId}.`;
+    els.cloudStatus.textContent = `Вход выполнен. Аккаунт: ${teacherLabel}.`;
   } else if (cloud.apiUrl) {
     els.cloudStatus.textContent = "URL сохранен. Войдите под логином учителя.";
   } else {
