@@ -28,7 +28,8 @@ body {
 
 button,
 input,
-select {
+select,
+.button-link {
   font: inherit;
 }
 
@@ -42,7 +43,30 @@ button {
   padding: 8px 12px;
 }
 
+button,
+.button-link {
+  text-align: center;
+  text-decoration: none;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
 button:hover {
+  background: var(--surface-2);
+}
+
+.button-link:hover {
   background: var(--surface-2);
 }
 
