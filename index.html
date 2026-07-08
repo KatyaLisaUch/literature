@@ -27,11 +27,11 @@
 
     <main class="layout">
       <aside class="sidebar">
-        <section class="panel">
+        <section id="loginPanel" class="panel">
           <h2>Google Sheets</h2>
           <form id="loginForm" class="stack">
             <label>
-              URL Google Apps Script
+              URL Google Apps Script для администратора
               <input id="apiUrlInput" name="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
             </label>
             <label>
@@ -44,10 +44,10 @@
             </label>
             <button type="submit" class="primary">Войти</button>
           </form>
-          <p id="cloudStatus" class="hint">Google Sheets не подключен.</p>
+          <p id="cloudStatus" class="hint">Ссылка на Google Apps Script уже указана. Изменяйте ее только при новом развертывании.</p>
         </section>
 
-        <section class="panel">
+        <section id="registerPanel" class="panel">
           <h2>Регистрация учителя</h2>
           <form id="registerForm" class="stack">
             <label>

@@ -1,6 +1,7 @@
 const STORAGE_KEY = "poetry-tracker-v1";
 const CLOUD_SETTINGS_KEY = "poetry-tracker-cloud-settings-v1";
 const CLOUD_SESSION_KEY = "poetry-tracker-cloud-session-v1";
+const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbx7cr37M2vJYYL_4HEAkGHrkj1HoyrMT5QJkcFX91dv77AIce5wt5zLMWQNnAjexRmcDA/exec";
 
 const state = {
   students: [],
@@ -25,7 +26,9 @@ const cloud = {
 
 const els = {
   loginForm: document.getElementById("loginForm"),
+  loginPanel: document.getElementById("loginPanel"),
   registerForm: document.getElementById("registerForm"),
+  registerPanel: document.getElementById("registerPanel"),
   apiUrlInput: document.getElementById("apiUrlInput"),
   cloudStatus: document.getElementById("cloudStatus"),
   teacherBadge: document.getElementById("teacherBadge"),
@@ -153,7 +156,7 @@ function loadCloudSettings() {
   try {
     const settings = JSON.parse(localStorage.getItem(CLOUD_SETTINGS_KEY) || "{}");
     const session = JSON.parse(localStorage.getItem(CLOUD_SESSION_KEY) || "{}");
-    cloud.apiUrl = normalizeText(settings.apiUrl);
+    cloud.apiUrl = normalizeText(settings.apiUrl) || DEFAULT_API_URL;
     cloud.token = normalizeText(session.token);
     cloud.teacherId = normalizeText(session.teacherId);
     cloud.teacherName = normalizeText(session.teacherName);
@@ -162,6 +165,9 @@ function loadCloudSettings() {
   } catch {
     localStorage.removeItem(CLOUD_SETTINGS_KEY);
     localStorage.removeItem(CLOUD_SESSION_KEY);
+    cloud.apiUrl = DEFAULT_API_URL;
+    els.apiUrlInput.value = cloud.apiUrl;
+    updateCloudStatus();
   }
 }
 
@@ -197,6 +203,8 @@ function updateCloudStatus(message) {
     els.cloudStatus.textContent = "Google Sheets не подключен.";
   }
   els.logoutBtn.hidden = !cloud.token;
+  els.loginPanel.hidden = !!cloud.token;
+  els.registerPanel.hidden = !!cloud.token;
 }
 
 async function apiRequest(action, payload = {}) {
