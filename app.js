@@ -196,7 +196,7 @@ function clearCloudSession() {
 
 function updateCloudStatus(message) {
   const teacherLabel = cloud.teacherName || cloud.teacherId;
-  const isAdmin = cloud.login.toLowerCase() === "katyalisa";
+  const isAdmin = !!cloud.token && cloud.login.toLowerCase() === "katyalisa";
   els.teacherBadge.hidden = !cloud.token;
   els.teacherBadge.textContent = cloud.token ? `Текущий учитель: ${teacherLabel}` : "";
 
@@ -636,14 +636,14 @@ function renderDebtors() {
   els.debtorsBody.innerHTML = rows.length
     ? rows.map(({ student, poem }) => `
         <tr>
-          <td>${escapeHtml(student.name)}</td>
-          <td>${escapeHtml(student.className)}</td>
-          <td>${escapeHtml(poem.title)}</td>
-          <td>${escapeHtml(poem.author)}</td>
-          <td>${escapeHtml(poem.endDate || "")}</td>
+          <td data-label="ФИО">${escapeHtml(student.name)}</td>
+          <td data-label="Класс">${escapeHtml(student.className)}</td>
+          <td data-label="Стих">${escapeHtml(poem.title)}</td>
+          <td data-label="Автор">${escapeHtml(poem.author)}</td>
+          <td data-label="Срок">${escapeHtml(poem.endDate || "")}</td>
         </tr>
       `).join("")
-    : `<tr><td colspan="5">Должников нет</td></tr>`;
+    : `<tr><td data-label="" colspan="5">Должников нет</td></tr>`;
 }
 
 function renderPoemReport() {
@@ -662,13 +662,13 @@ function renderPoemReport() {
         const grade = gradeFor(student.id, poem.id);
         return `
           <tr>
-            <td>${escapeHtml(student.name)}</td>
-            <td>${escapeHtml(student.className)}</td>
-            <td class="${grade ? `grade-${grade}` : ""}">${grade || "Не сдал"}</td>
+            <td data-label="ФИО">${escapeHtml(student.name)}</td>
+            <td data-label="Класс">${escapeHtml(student.className)}</td>
+            <td data-label="Оценка" class="${grade ? `grade-${grade}` : ""}">${grade || "Не сдал"}</td>
           </tr>
         `;
       }).join("")
-    : `<tr><td colspan="3">Нет учеников для этой параллели</td></tr>`;
+    : `<tr><td data-label="" colspan="3">Нет учеников для этой параллели</td></tr>`;
 }
 
 function renderPoems() {
@@ -678,15 +678,15 @@ function renderPoems() {
         .sort((a, b) => a.gradeLevel.localeCompare(b.gradeLevel, "ru") || a.title.localeCompare(b.title, "ru"))
         .map((poem) => `
           <tr>
-            <td>${escapeHtml(poem.title)}</td>
-            <td>${escapeHtml(poem.author)}</td>
-            <td>${escapeHtml(poem.gradeLevel)}</td>
-            <td>${escapeHtml(poem.startDate)}</td>
-            <td>${escapeHtml(poem.endDate)}</td>
-            <td><button class="small-action danger" data-delete-poem="${poem.id}">Удалить</button></td>
+            <td data-label="Название">${escapeHtml(poem.title)}</td>
+            <td data-label="Автор">${escapeHtml(poem.author)}</td>
+            <td data-label="Параллель">${escapeHtml(poem.gradeLevel)}</td>
+            <td data-label="Начало">${escapeHtml(poem.startDate)}</td>
+            <td data-label="Окончание">${escapeHtml(poem.endDate)}</td>
+            <td data-label=""><button class="small-action danger" data-delete-poem="${poem.id}">Удалить</button></td>
           </tr>
         `).join("")
-    : `<tr><td colspan="6">Список стихов пуст</td></tr>`;
+    : `<tr><td data-label="" colspan="6">Список стихов пуст</td></tr>`;
 }
 
 function render() {
