@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Учет сдачи стихов</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>Учет сдачи стихов</h1>
+        <p>Импорт учеников и стихов из Excel, оценки, должники и экспорт отчета.</p>
+      </div>
+      <div class="header-actions">
+        <button id="exportWorkbookBtn" class="primary">Экспорт в Excel</button>
+        <button id="clearDataBtn" class="danger">Очистить данные</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <section class="panel">
+          <h2>Импорт</h2>
+          <label class="file-control">
+            <span>Ученики Excel</span>
+            <input id="studentsFile" type="file" accept=".xlsx,.xls,.csv">
+          </label>
+          <p class="hint">Колонки: ФИО, класс</p>
+
+          <label class="file-control">
+            <span>Стихи Excel</span>
+            <input id="poemsFile" type="file" accept=".xlsx,.xls,.csv">
+          </label>
+          <p class="hint">Колонки: название, автор, класс, дата начала сдачи, дата окончания сдачи</p>
+        </section>
+
+        <section class="panel">
+          <h2>Добавить стих</h2>
+          <form id="poemForm" class="stack">
+            <label>
+              Название
+              <input name="title" required>
+            </label>
+            <label>
+              Автор
+              <input name="author" required>
+            </label>
+            <label>
+              Параллель
+              <input name="gradeLevel" placeholder="5" required>
+            </label>
+            <label>
+              Начало сдачи
+              <input name="startDate" type="date">
+            </label>
+            <label>
+              Окончание сдачи
+              <input name="endDate" type="date">
+            </label>
+            <button type="submit">Добавить</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Фильтры</h2>
+          <label>
+            Класс
+            <select id="classFilter"></select>
+          </label>
+          <label>
+            Стих
+            <select id="poemFilter"></select>
+          </label>
+        </section>
+      </aside>
+
+      <section class="content">
+        <section class="stats-grid" aria-label="Статистика">
+          <div class="stat">
+            <span>Ученики</span>
+            <strong id="studentsCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Стихи</span>
+            <strong id="poemsCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Оценки</span>
+            <strong id="gradesCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Долги</span>
+            <strong id="debtsCount">0</strong>
+          </div>
+        </section>
+
+        <nav class="tabs" aria-label="Разделы">
+          <button class="tab active" data-tab="journal">Журнал</button>
+          <button class="tab" data-tab="debtors">Должники</button>
+          <button class="tab" data-tab="poem-report">По стиху</button>
+          <button class="tab" data-tab="poems">Список стихов</button>
+        </nav>
+
+        <section id="journalTab" class="tab-panel active">
+          <div class="table-wrap">
+            <table>
+              <thead id="journalHead"></thead>
+              <tbody id="journalBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="debtorsTab" class="tab-panel">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Класс</th>
+                  <th>Стих</th>
+                  <th>Автор</th>
+                  <th>Срок</th>
+                </tr>
+              </thead>
+              <tbody id="debtorsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="poemReportTab" class="tab-panel">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Класс</th>
+                  <th>Оценка</th>
+                </tr>
+              </thead>
+              <tbody id="poemReportBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="poemsTab" class="tab-panel">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Автор</th>
+                  <th>Параллель</th>
+                  <th>Начало</th>
+                  <th>Окончание</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="poemsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <p id="emptyState" class="empty-state">
+          Загрузите Excel с учениками и стихами, чтобы начать учет.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
