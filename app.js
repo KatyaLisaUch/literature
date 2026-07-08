@@ -1,4 +1,6 @@
 const STORAGE_KEY = "poetry-tracker-v1";
+const CLOUD_SETTINGS_KEY = "poetry-tracker-cloud-settings-v1";
+const CLOUD_SESSION_KEY = "poetry-tracker-cloud-session-v1";
 
 const state = {
   students: [],
@@ -6,7 +8,30 @@ const state = {
   grades: {}
 };
 
+let dataFileHandle = null;
+let dataFileWriteInProgress = false;
+let dataFileWritePending = false;
+let cloudSaveTimer = null;
+let cloudSaveInProgress = false;
+let cloudSavePending = false;
+let suppressCloudSave = false;
+
+const cloud = {
+  apiUrl: "",
+  token: "",
+  teacherId: "",
+  teacherName: ""
+};
+
 const els = {
+  loginForm: document.getElementById("loginForm"),
+  apiUrlInput: document.getElementById("apiUrlInput"),
+  cloudStatus: document.getElementById("cloudStatus"),
+  logoutBtn: document.getElementById("logoutBtn"),
+  dataFileInput: document.getElementById("dataFileInput"),
+  dataFileStatus: document.getElementById("dataFileStatus"),
+  loadDataFileBtn: document.getElementById("loadDataFileBtn"),
+  saveDataFileBtn: document.getElementById("saveDataFileBtn"),
   studentsFile: document.getElementById("studentsFile"),
   poemsFile: document.getElementById("poemsFile"),
   poemForm: document.getElementById("poemForm"),
@@ -95,6 +120,8 @@ function pick(row, variants) {
 
 function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  queueConnectedDataFileWrite();
+  queueCloudSave();
 }
 
 function load() {
@@ -108,6 +135,291 @@ function load() {
   } catch {
     localStorage.removeItem(STORAGE_KEY);
   }
+}
+
+function dataSnapshot() {
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    students: state.students,
+    poems: state.poems,
+    grades: state.grades
+  };
+}
+
+function loadCloudSettings() {
+  try {
+    const settings = JSON.parse(localStorage.getItem(CLOUD_SETTINGS_KEY) || "{}");
+    const session = JSON.parse(localStorage.getItem(CLOUD_SESSION_KEY) || "{}");
+    cloud.apiUrl = normalizeText(settings.apiUrl);
+    cloud.token = normalizeText(session.token);
+    cloud.teacherId = normalizeText(session.teacherId);
+    cloud.teacherName = normalizeText(session.teacherName);
+    els.apiUrlInput.value = cloud.apiUrl;
+    updateCloudStatus();
+  } catch {
+    localStorage.removeItem(CLOUD_SETTINGS_KEY);
+    localStorage.removeItem(CLOUD_SESSION_KEY);
+  }
+}
+
+function saveCloudSettings() {
+  localStorage.setItem(CLOUD_SETTINGS_KEY, JSON.stringify({ apiUrl: cloud.apiUrl }));
+  localStorage.setItem(CLOUD_SESSION_KEY, JSON.stringify({
+    token: cloud.token,
+    teacherId: cloud.teacherId,
+    teacherName: cloud.teacherName
+  }));
+}
+
+function clearCloudSession() {
+  cloud.token = "";
+  cloud.teacherId = "";
+  cloud.teacherName = "";
+  localStorage.removeItem(CLOUD_SESSION_KEY);
+  updateCloudStatus();
+}
+
+function updateCloudStatus(message) {
+  if (message) {
+    els.cloudStatus.textContent = message;
+  } else if (cloud.token) {
+    els.cloudStatus.textContent = `Вход выполнен: ${cloud.teacherName || cloud.teacherId}.`;
+  } else if (cloud.apiUrl) {
+    els.cloudStatus.textContent = "URL сохранен. Войдите под логином учителя.";
+  } else {
+    els.cloudStatus.textContent = "Google Sheets не подключен.";
+  }
+  els.logoutBtn.hidden = !cloud.token;
+}
+
+async function apiRequest(action, payload = {}) {
+  if (!cloud.apiUrl) {
+    throw new Error("Укажите URL Google Apps Script.");
+  }
+
+  const response = await fetch(cloud.apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, ...payload })
+  });
+  const result = await response.json();
+  if (!result.ok) {
+    throw new Error(result.error || "Ошибка Google Sheets.");
+  }
+  return result;
+}
+
+function applyRemoteData(data) {
+  suppressCloudSave = true;
+  try {
+    applyDataFile(data || {});
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    render();
+  } finally {
+    suppressCloudSave = false;
+  }
+}
+
+function queueCloudSave() {
+  if (suppressCloudSave || !cloud.token || !cloud.apiUrl) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(saveCloudNow, 700);
+}
+
+async function saveCloudNow() {
+  if (!cloud.token || !cloud.apiUrl) return;
+  if (cloudSaveInProgress) {
+    cloudSavePending = true;
+    return;
+  }
+
+  cloudSaveInProgress = true;
+  updateCloudStatus("Сохранение в Google Sheets...");
+  try {
+    await apiRequest("saveAll", {
+      token: cloud.token,
+      data: dataSnapshot()
+    });
+    updateCloudStatus("Данные сохранены в Google Sheets.");
+  } catch (error) {
+    updateCloudStatus(`Ошибка сохранения: ${error.message}`);
+  } finally {
+    cloudSaveInProgress = false;
+    if (cloudSavePending) {
+      cloudSavePending = false;
+      saveCloudNow();
+    }
+  }
+}
+
+async function loginToCloud(formData) {
+  cloud.apiUrl = normalizeText(formData.get("apiUrl"));
+  const login = normalizeText(formData.get("login"));
+  const password = normalizeText(formData.get("password"));
+
+  if (!cloud.apiUrl || !login || !password) {
+    alert("Заполните URL скрипта, логин и пароль.");
+    return;
+  }
+
+  localStorage.setItem(CLOUD_SETTINGS_KEY, JSON.stringify({ apiUrl: cloud.apiUrl }));
+  updateCloudStatus("Выполняется вход...");
+
+  try {
+    const result = await apiRequest("login", { login, password });
+    cloud.token = result.token;
+    cloud.teacherId = result.teacherId;
+    cloud.teacherName = result.teacherName;
+    saveCloudSettings();
+    applyRemoteData(result.data);
+    updateCloudStatus(`Вход выполнен: ${cloud.teacherName || login}.`);
+    els.loginForm.reset();
+    els.apiUrlInput.value = cloud.apiUrl;
+  } catch (error) {
+    clearCloudSession();
+    updateCloudStatus(`Ошибка входа: ${error.message}`);
+  }
+}
+
+async function refreshCloudData() {
+  if (!cloud.token || !cloud.apiUrl) return;
+  try {
+    updateCloudStatus("Загрузка данных из Google Sheets...");
+    const result = await apiRequest("getData", { token: cloud.token });
+    applyRemoteData(result.data);
+    updateCloudStatus();
+  } catch (error) {
+    updateCloudStatus(`Не удалось загрузить Google Sheets: ${error.message}`);
+  }
+}
+
+function setDataFileStatus(message) {
+  els.dataFileStatus.textContent = message;
+}
+
+function downloadJsonFile(filename, data) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function applyDataFile(data) {
+  if (!data || typeof data !== "object") {
+    throw new Error("Файл базы поврежден или имеет неверный формат.");
+  }
+
+  state.students = Array.isArray(data.students)
+    ? data.students.map((student) => ({
+        id: normalizeText(student.id) || uid("student"),
+        name: normalizeText(student.name),
+        className: normalizeText(student.className)
+      })).filter((student) => student.name && student.className)
+    : [];
+
+  state.poems = Array.isArray(data.poems)
+    ? data.poems.map((poem) => ({
+        id: normalizeText(poem.id) || uid("poem"),
+        title: normalizeText(poem.title),
+        author: normalizeText(poem.author),
+        gradeLevel: normalizeText(poem.gradeLevel),
+        startDate: normalizeText(poem.startDate),
+        endDate: normalizeText(poem.endDate)
+      })).filter((poem) => poem.title && poem.author && poem.gradeLevel)
+    : [];
+
+  state.grades = data.grades && typeof data.grades === "object" && !Array.isArray(data.grades)
+    ? Object.fromEntries(Object.entries(data.grades).filter(([, grade]) => ["2", "3", "4", "5"].includes(String(grade))))
+    : {};
+}
+
+async function readDataFile(file) {
+  const text = await file.text();
+  applyDataFile(JSON.parse(text));
+  save();
+  render();
+}
+
+async function writeConnectedDataFile() {
+  if (!dataFileHandle) return;
+  const writable = await dataFileHandle.createWritable();
+  await writable.write(JSON.stringify(dataSnapshot(), null, 2));
+  await writable.close();
+  setDataFileStatus("Файл базы подключен. Изменения сохраняются в JSON-файл.");
+}
+
+function queueConnectedDataFileWrite() {
+  if (!dataFileHandle || !dataFileHandle.createWritable) return;
+
+  if (dataFileWriteInProgress) {
+    dataFileWritePending = true;
+    return;
+  }
+
+  dataFileWriteInProgress = true;
+  writeConnectedDataFile()
+    .catch(() => setDataFileStatus("Не удалось автоматически записать файл. Нажмите 'Сохранить базу'."))
+    .finally(() => {
+      dataFileWriteInProgress = false;
+      if (dataFileWritePending) {
+        dataFileWritePending = false;
+        queueConnectedDataFileWrite();
+      }
+    });
+}
+
+async function saveDataFile() {
+  if (window.showSaveFilePicker) {
+    try {
+      dataFileHandle = await window.showSaveFilePicker({
+        suggestedName: "baza-ucheta-stihov.json",
+        types: [{
+          description: "JSON база учета стихов",
+          accept: { "application/json": [".json"] }
+        }]
+      });
+      await writeConnectedDataFile();
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      setDataFileStatus("Не удалось выбрать файл. База будет скачана обычным файлом.");
+    }
+  }
+
+  downloadJsonFile("baza-ucheta-stihov.json", dataSnapshot());
+  setDataFileStatus("База скачана JSON-файлом. После изменений скачайте ее снова.");
+}
+
+async function loadDataFile() {
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        multiple: false,
+        types: [{
+          description: "JSON база учета стихов",
+          accept: { "application/json": [".json"] }
+        }]
+      });
+      const file = await handle.getFile();
+      await readDataFile(file);
+      dataFileHandle = handle;
+      setDataFileStatus("Файл базы подключен. Изменения сохраняются в JSON-файл.");
+      alert("База загружена.");
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      alert(`Не удалось загрузить базу: ${error.message}`);
+      return;
+    }
+  }
+
+  els.dataFileInput.click();
 }
 
 function gradeKey(studentId, poemId) {
@@ -432,9 +744,34 @@ els.poemForm.addEventListener("submit", (event) => {
   event.currentTarget.reset();
 });
 
+els.loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  loginToCloud(new FormData(event.currentTarget));
+});
+
+els.logoutBtn.addEventListener("click", () => {
+  clearCloudSession();
+  updateCloudStatus("Вы вышли из Google Sheets. Локальные данные остались на экране.");
+});
+
 els.classFilter.addEventListener("change", render);
 els.poemFilter.addEventListener("change", renderPoemReport);
+els.saveDataFileBtn.addEventListener("click", saveDataFile);
+els.loadDataFileBtn.addEventListener("click", loadDataFile);
 els.exportWorkbookBtn.addEventListener("click", exportWorkbook);
+els.dataFileInput.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    await readDataFile(file);
+    setDataFileStatus("База загружена из JSON-файла. После изменений нажмите 'Сохранить базу'.");
+    alert("База загружена.");
+  } catch (error) {
+    alert(`Не удалось загрузить базу: ${error.message}`);
+  } finally {
+    event.target.value = "";
+  }
+});
 els.clearDataBtn.addEventListener("click", () => {
   if (!confirm("Удалить все данные из этого браузера?")) return;
   state.students = [];
@@ -465,4 +802,6 @@ document.querySelectorAll(".tab").forEach((button) => {
 });
 
 load();
+loadCloudSettings();
 render();
+refreshCloudData();

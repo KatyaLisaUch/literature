@@ -15,13 +15,44 @@
         <p>Импорт учеников и стихов из Excel, оценки, должники и экспорт отчета.</p>
       </div>
       <div class="header-actions">
+        <button id="logoutBtn" hidden>Выйти</button>
+        <button id="loadDataFileBtn">Загрузить базу</button>
+        <button id="saveDataFileBtn">Сохранить базу</button>
         <button id="exportWorkbookBtn" class="primary">Экспорт в Excel</button>
         <button id="clearDataBtn" class="danger">Очистить данные</button>
       </div>
     </header>
+    <input id="dataFileInput" class="visually-hidden" type="file" accept=".json,application/json">
 
     <main class="layout">
       <aside class="sidebar">
+        <section class="panel">
+          <h2>Google Sheets</h2>
+          <form id="loginForm" class="stack">
+            <label>
+              URL Google Apps Script
+              <input id="apiUrlInput" name="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+            </label>
+            <label>
+              Логин
+              <input name="login" autocomplete="username">
+            </label>
+            <label>
+              Пароль
+              <input name="password" type="password" autocomplete="current-password">
+            </label>
+            <button type="submit" class="primary">Войти</button>
+          </form>
+          <p id="cloudStatus" class="hint">Google Sheets не подключен.</p>
+        </section>
+
+        <section class="panel">
+          <h2>Файл базы</h2>
+          <p id="dataFileStatus" class="hint">
+            База хранится в файле JSON. Сначала сохраните или загрузите файл базы.
+          </p>
+        </section>
+
         <section class="panel">
           <h2>Импорт</h2>
           <div class="template-actions">
