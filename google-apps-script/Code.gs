@@ -130,6 +130,7 @@ function login(loginValue, password) {
     ok: true,
     token,
     teacherId: row[0],
+    login: row[1],
     teacherName: row[4],
     data: readTeacherData(row[0])
   };
