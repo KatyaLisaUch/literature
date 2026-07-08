@@ -25,6 +25,7 @@ const cloud = {
 
 const els = {
   loginForm: document.getElementById("loginForm"),
+  registerForm: document.getElementById("registerForm"),
   apiUrlInput: document.getElementById("apiUrlInput"),
   cloudStatus: document.getElementById("cloudStatus"),
   teacherBadge: document.getElementById("teacherBadge"),
@@ -284,6 +285,46 @@ async function loginToCloud(formData) {
   } catch (error) {
     clearCloudSession();
     updateCloudStatus(`Ошибка входа: ${error.message}`);
+  }
+}
+
+async function registerTeacher(formData) {
+  cloud.apiUrl = normalizeText(els.apiUrlInput.value);
+  const teacherName = normalizeText(formData.get("teacherName"));
+  const login = normalizeText(formData.get("login"));
+  const password = normalizeText(formData.get("password"));
+  const adminPassword = normalizeText(formData.get("adminPassword"));
+
+  if (!cloud.apiUrl) {
+    alert("Сначала укажите URL Google Apps Script в блоке Google Sheets.");
+    return;
+  }
+
+  if (!teacherName || !login || !password || !adminPassword) {
+    alert("Заполните ФИО учителя, логин, пароль и админ-пароль.");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("Пароль учителя должен быть не короче 6 символов.");
+    return;
+  }
+
+  localStorage.setItem(CLOUD_SETTINGS_KEY, JSON.stringify({ apiUrl: cloud.apiUrl }));
+  updateCloudStatus("Регистрация учителя...");
+
+  try {
+    await apiRequest("registerTeacher", {
+      teacherName,
+      login,
+      password,
+      adminPassword
+    });
+    els.registerForm.reset();
+    updateCloudStatus(`Учитель зарегистрирован: ${teacherName}. Теперь можно войти.`);
+    alert(`Учитель зарегистрирован. Логин: ${login}`);
+  } catch (error) {
+    updateCloudStatus(`Ошибка регистрации: ${error.message}`);
   }
 }
 
@@ -752,6 +793,11 @@ els.poemForm.addEventListener("submit", (event) => {
 els.loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   loginToCloud(new FormData(event.currentTarget));
+});
+
+els.registerForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  registerTeacher(new FormData(event.currentTarget));
 });
 
 els.logoutBtn.addEventListener("click", () => {

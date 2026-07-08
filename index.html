@@ -48,6 +48,30 @@
         </section>
 
         <section class="panel">
+          <h2>Регистрация учителя</h2>
+          <form id="registerForm" class="stack">
+            <label>
+              ФИО учителя
+              <input name="teacherName" autocomplete="name">
+            </label>
+            <label>
+              Новый логин
+              <input name="login" autocomplete="off">
+            </label>
+            <label>
+              Новый пароль
+              <input name="password" type="password" autocomplete="new-password">
+            </label>
+            <label>
+              Админ-пароль
+              <input name="adminPassword" type="password">
+            </label>
+            <button type="submit">Зарегистрировать</button>
+          </form>
+          <p class="hint">Регистрация доступна только с админ-паролем.</p>
+        </section>
+
+        <section class="panel">
           <h2>Файл базы</h2>
           <p id="dataFileStatus" class="hint">
             База хранится в файле JSON. Сначала сохраните или загрузите файл базы.
