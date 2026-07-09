@@ -18,7 +18,7 @@
   --violet-rim: inset 0 -7px 11px rgba(164, 143, 255, 0.12);
   --page-max: 1680px;
   --journal-bg: rgba(244, 240, 255, 0.72);
-  --journal-cell: rgba(244, 240, 255, 0.9);
+  --journal-cell: rgba(255, 255, 255, 0.96);
   --journal-head: rgba(205, 204, 208, 0.92);
   --journal-text: #10093a;
   --radius-control: 5px;
@@ -722,19 +722,19 @@ tr:last-child td {
 }
 
 .grade-2 {
-  background: rgba(80, 70, 228, 0.16);
+  background: #ffd9df;
 }
 
 .grade-3 {
-  background: rgba(147, 130, 255, 0.18);
+  background: #fff2bf;
 }
 
 .grade-4 {
-  background: rgba(186, 156, 255, 0.22);
+  background: #dcecff;
 }
 
 .grade-5 {
-  background: rgba(255, 255, 255, 0.9);
+  background: #dff7e8;
 }
 
 .empty-state {
