@@ -873,28 +873,51 @@ function exportWorkbook() {
 
 function exportDebtorsWorkbook() {
   const className = selectedDebtorsClass();
-  const rows = debtorSummaryRows(selectedDebtorsClass()).map(({ student, poems }) => ({
-    "ФИО": student.name,
-    "Класс": student.className,
-    "Количество несданных": poems.length,
-    "Несданные стихи": poems.map((poem) => `${poem.title} (${poem.author})`).join("; "),
-    "Сроки": poems.map((poem) => poem.endDate).filter(Boolean).join("; ")
-  }));
+  const debtors = debtorSummaryRows(className);
 
-  if (!rows.length) {
+  if (!debtors.length) {
     alert("В выбранном классе должников нет.");
     return;
   }
 
+  const maxDebtCount = Math.max(...debtors.map(({ poems }) => poems.length));
+  const headers = [
+    "ФИО",
+    "Класс",
+    "Количество несданных",
+    ...Array.from({ length: maxDebtCount }, (_, index) => `Стих ${index + 1}`)
+  ];
+  const rows = [
+    headers,
+    ...debtors.map(({ student, poems }) => [
+      student.name,
+      student.className,
+      poems.length,
+      ...Array.from({ length: maxDebtCount }, (_, index) => {
+        const poem = poems[index];
+        if (!poem) return "";
+        const deadline = poem.endDate ? `, срок: ${poem.endDate}` : "";
+        return `${poem.title} (${poem.author}${deadline})`;
+      })
+    ])
+  ];
+
   const workbook = XLSX.utils.book_new();
-  const sheet = XLSX.utils.json_to_sheet(rows);
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
   sheet["!cols"] = [
     { wch: 34 },
     { wch: 12 },
     { wch: 18 },
-    { wch: 70 },
-    { wch: 32 }
+    ...Array.from({ length: maxDebtCount }, () => ({ wch: 34 }))
   ];
+  for (let column = 0; column < headers.length; column += 1) {
+    const address = XLSX.utils.encode_cell({ r: 0, c: column });
+    sheet[address].s = {
+      font: { bold: true },
+      fill: { patternType: "solid", fgColor: { rgb: "E6F4F9" } },
+      alignment: { horizontal: "center", vertical: "center", wrapText: true }
+    };
+  }
   XLSX.utils.book_append_sheet(workbook, sheet, "Должники");
   const suffix = className ? `-${className}` : "-vse-klassy";
   XLSX.writeFile(workbook, `dolzhniki-po-stiham${suffix}.xlsx`);
