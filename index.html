@@ -7,13 +7,25 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260709-menu7">
+    <link rel="stylesheet" href="styles.css?v=20260709-reflect1">
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script>
-    <script src="app.js?v=20260709-menu7" defer></script>
+    <script src="app.js?v=20260709-reflect1" defer></script>
   </head>
   <body>
     <header class="app-header">
-      <div class="header-actions">
+      <nav class="nav-pill" aria-label="Главное меню">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="header-title">
+          <h1>Учет стихов</h1>
+        </div>
+        <div class="desktop-menu">
+          <button class="menu-item" data-tab="journal" type="button">Журнал</button>
+          <button class="menu-item" data-tab="debtors" type="button">Должники</button>
+          <button class="menu-item" data-tab="import" type="button">Импорт</button>
+          <button class="menu-item" data-tab="add-poem" type="button">Стихи</button>
+          <button class="menu-item" data-tab="export" type="button">Экспорт</button>
+        </div>
+        <p id="teacherBadge" class="teacher-badge" hidden></p>
         <div class="menu-shell">
           <button id="menuToggleBtn" class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="appMenu">
             <span class="menu-toggle-line"></span>
@@ -23,7 +35,7 @@
           <div id="menuOverlay" class="menu-overlay" hidden></div>
           <div id="appMenu" class="app-menu" hidden>
             <div class="menu-head">
-              <strong>Разделы</strong>
+              <strong>Меню</strong>
               <button id="menuCloseBtn" class="icon-button" type="button" aria-label="Закрыть меню">×</button>
             </div>
             <button class="menu-item" data-tab="journal" type="button">Журнал</button>
@@ -38,12 +50,7 @@
             <button id="logoutBtn" class="menu-item" type="button" hidden>Выйти</button>
           </div>
         </div>
-      </div>
-      <div class="header-title">
-        <h1>Учет сдачи стихов</h1>
-        <p>Импорт учеников и стихов из Excel, оценки, должники и экспорт отчета.</p>
-        <p id="teacherBadge" class="teacher-badge" hidden></p>
-      </div>
+      </nav>
     </header>
     <input id="dataFileInput" class="visually-hidden" type="file" accept=".json,application/json">
     <p id="dataFileStatus" class="visually-hidden"></p>
@@ -93,6 +100,12 @@
       </aside>
 
       <section class="content">
+        <section class="hero-panel">
+          <div class="hero-badge">Google Sheets · Excel · Журнал</div>
+          <h2>Контроль сдачи стихов</h2>
+          <p>Темный рабочий журнал для учителя: ученики, стихи, оценки, должники и экспорт отчетов в одном месте.</p>
+        </section>
+
         <section class="panel filters-panel top-filters collapsed" id="filtersPanel">
           <button id="filtersToggleBtn" class="filters-toggle" type="button" aria-expanded="false">
             <span>Фильтры</span>
