@@ -57,6 +57,13 @@ const els = {
   clearDataBtn: document.getElementById("clearDataBtn")
 };
 
+function removeLegacyUi() {
+  document.querySelectorAll('[data-tab="poem-report"], [data-tab="poems"]').forEach((element) => element.remove());
+  document.getElementById("poemReportTab")?.remove();
+  document.getElementById("poemsTab")?.remove();
+  document.getElementById("adminSettingsPanel")?.remove();
+}
+
 function uid(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
@@ -865,6 +872,7 @@ function exportWorkbook() {
 }
 
 function exportDebtorsWorkbook() {
+  const className = selectedDebtorsClass();
   const rows = debtorSummaryRows(selectedDebtorsClass()).map(({ student, poems }) => ({
     "ФИО": student.name,
     "Класс": student.className,
@@ -888,7 +896,8 @@ function exportDebtorsWorkbook() {
     { wch: 32 }
   ];
   XLSX.utils.book_append_sheet(workbook, sheet, "Должники");
-  XLSX.writeFile(workbook, "dolzhniki-po-stiham.xlsx");
+  const suffix = className ? `-${className}` : "-vse-klassy";
+  XLSX.writeFile(workbook, `dolzhniki-po-stiham${suffix}.xlsx`);
 }
 
 els.studentsFile.addEventListener("change", (event) => {
@@ -996,6 +1005,7 @@ document.querySelectorAll(".menu-item[data-tab]").forEach((button) => {
   button.addEventListener("click", () => setActiveTab(button.dataset.tab));
 });
 
+removeLegacyUi();
 load();
 loadCloudSettings();
 render();
