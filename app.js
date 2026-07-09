@@ -48,6 +48,7 @@ const els = {
   studentFilter: document.getElementById("studentFilter"),
   debtorsClassFilter: document.getElementById("debtorsClassFilter"),
   exportClassFilter: document.getElementById("exportClassFilter"),
+  poemsEditBody: document.getElementById("poemsEditBody"),
   journalHead: document.getElementById("journalHead"),
   journalBody: document.getElementById("journalBody"),
   debtorsBody: document.getElementById("debtorsBody"),
@@ -715,11 +716,30 @@ function renderDebtors() {
     : `<tr><td data-label="" colspan="5">Должников нет</td></tr>`;
 }
 
+function renderPoemsEditor() {
+  els.poemsEditBody.innerHTML = state.poems.length
+    ? state.poems
+        .slice()
+        .sort((a, b) => a.gradeLevel.localeCompare(b.gradeLevel, "ru") || a.title.localeCompare(b.title, "ru"))
+        .map((poem) => `
+          <tr>
+            <td><input data-poem-id="${poem.id}" data-poem-field="title" value="${escapeHtml(poem.title)}"></td>
+            <td><input data-poem-id="${poem.id}" data-poem-field="author" value="${escapeHtml(poem.author)}"></td>
+            <td><input data-poem-id="${poem.id}" data-poem-field="gradeLevel" value="${escapeHtml(poem.gradeLevel)}"></td>
+            <td><input data-poem-id="${poem.id}" data-poem-field="startDate" type="date" value="${escapeHtml(poem.startDate)}"></td>
+            <td><input data-poem-id="${poem.id}" data-poem-field="endDate" type="date" value="${escapeHtml(poem.endDate)}"></td>
+            <td><button class="small-action danger" data-delete-poem="${poem.id}" type="button">Удалить</button></td>
+          </tr>
+        `).join("")
+    : `<tr><td colspan="6">Список стихов пуст</td></tr>`;
+}
+
 function render() {
   syncFilters();
   renderStats();
   renderJournal();
   renderDebtors();
+  renderPoemsEditor();
 }
 
 function tabPanelId(tabName) {
@@ -821,6 +841,18 @@ function deletePoem(id) {
   state.poems = state.poems.filter((poem) => poem.id !== id);
   for (const key of Object.keys(state.grades)) {
     if (key.endsWith(`:${id}`)) delete state.grades[key];
+  }
+  save();
+  render();
+}
+
+function updatePoemField(id, field, value) {
+  const poem = state.poems.find((item) => item.id === id);
+  if (!poem) return;
+  if (field === "gradeLevel") {
+    poem[field] = classParallel(value);
+  } else {
+    poem[field] = normalizeText(value);
   }
   save();
   render();
@@ -1101,6 +1133,11 @@ els.clearDataBtn.addEventListener("click", () => {
 document.addEventListener("change", (event) => {
   if (!event.target.matches(".grade-select")) return;
   setGrade(event.target.dataset.studentId, event.target.dataset.poemId, event.target.value);
+});
+
+document.addEventListener("change", (event) => {
+  if (!event.target.matches("[data-poem-field]")) return;
+  updatePoemField(event.target.dataset.poemId, event.target.dataset.poemField, event.target.value);
 });
 
 document.addEventListener("click", (event) => {

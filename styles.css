@@ -217,8 +217,31 @@ body.is-authenticated .content {
 }
 
 body[data-active-tab="export"] .top-filters,
-body[data-active-tab="export"] .tabs {
+body[data-active-tab="import"] .top-filters,
+body[data-active-tab="add-poem"] .top-filters,
+body[data-active-tab="export"] .tabs,
+body[data-active-tab="import"] .tabs,
+body[data-active-tab="add-poem"] .tabs {
   display: none;
+}
+
+.edit-table-wrap {
+  margin-top: 18px;
+}
+
+.poems-edit-table {
+  min-width: 860px;
+}
+
+.poems-edit-table input {
+  min-height: 38px;
+  font-size: 14px;
+  padding: 6px 8px;
+}
+
+.poems-edit-table th,
+.poems-edit-table td {
+  padding: 8px;
 }
 
 .panel {

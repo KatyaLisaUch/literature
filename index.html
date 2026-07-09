@@ -22,7 +22,7 @@
             <button class="menu-item" data-tab="journal" type="button">Журнал</button>
             <button class="menu-item" data-tab="debtors" type="button">Должники</button>
             <button class="menu-item" data-tab="import" type="button">Импорт</button>
-            <button class="menu-item" data-tab="add-poem" type="button">Добавить стих</button>
+            <button class="menu-item" data-tab="add-poem" type="button">Стихи</button>
             <button class="menu-item" data-tab="export" type="button">Экспорт</button>
             <hr>
             <button id="loadDataFileBtn" class="menu-item" type="button">Загрузить базу</button>
@@ -162,7 +162,7 @@
 
         <section id="addPoemTab" class="tab-panel">
           <section class="panel page-panel">
-            <h2>Добавить стих</h2>
+            <h2>Стихи</h2>
             <form id="poemForm" class="stack">
               <label>
                 Название
@@ -186,6 +186,21 @@
               </label>
               <button type="submit">Добавить</button>
             </form>
+            <div class="table-wrap edit-table-wrap">
+              <table class="poems-edit-table">
+                <thead>
+                  <tr>
+                    <th>Название</th>
+                    <th>Автор</th>
+                    <th>Параллель</th>
+                    <th>Начало</th>
+                    <th>Окончание</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="poemsEditBody"></tbody>
+              </table>
+            </div>
           </section>
         </section>
 
