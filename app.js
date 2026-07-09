@@ -1072,7 +1072,7 @@ els.exportClassFilter.addEventListener("change", () => {
 els.saveDataFileBtn.addEventListener("click", saveDataFile);
 els.loadDataFileBtn.addEventListener("click", loadDataFile);
 els.exportWorkbookBtn.addEventListener("click", () => exportWorkbook(selectedExportClass()));
-els.exportDebtorsBtn.addEventListener("click", exportDebtorsWorkbook);
+els.exportDebtorsBtn.addEventListener("click", () => exportDebtorsWorkbook(selectedDebtorsClass()));
 document.querySelectorAll("#appMenu button:not([data-tab])").forEach((button) => {
   button.addEventListener("click", closeMenu);
 });
