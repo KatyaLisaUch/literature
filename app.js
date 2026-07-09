@@ -43,8 +43,10 @@ const els = {
   studentsFile: document.getElementById("studentsFile"),
   poemsFile: document.getElementById("poemsFile"),
   poemForm: document.getElementById("poemForm"),
+  studentSearchInput: document.getElementById("studentSearchInput"),
+  studentSearchList: document.getElementById("studentSearchList"),
   classFilter: document.getElementById("classFilter"),
-  poemFilter: document.getElementById("poemFilter"),
+  studentFilter: document.getElementById("studentFilter"),
   journalHead: document.getElementById("journalHead"),
   journalBody: document.getElementById("journalBody"),
   debtorsBody: document.getElementById("debtorsBody"),
@@ -524,14 +526,32 @@ function selectedClass() {
   return els.classFilter.value;
 }
 
-function selectedPoemId() {
-  return els.poemFilter.value;
+function selectedStudentId() {
+  return els.studentFilter.value;
+}
+
+function studentSearchQuery() {
+  return normalizeText(els.studentSearchInput.value).toLowerCase();
+}
+
+function studentMatchesSearch(student, query) {
+  if (!query) return true;
+  const fullName = normalizeText(student.name).toLowerCase();
+  const displayName = displayStudentName(student.name).toLowerCase();
+  const words = fullName.split(/\s+/).filter(Boolean);
+  return fullName.startsWith(query)
+    || displayName.startsWith(query)
+    || words.some((word) => word.startsWith(query));
 }
 
 function filteredStudents() {
   const className = selectedClass();
+  const studentId = selectedStudentId();
+  const query = studentSearchQuery();
   return state.students
-    .filter((student) => !className || student.className === className)
+    .filter((student) => query || !className || student.className === className)
+    .filter((student) => !studentId || student.id === studentId)
+    .filter((student) => studentMatchesSearch(student, query))
     .sort((a, b) => a.className.localeCompare(b.className, "ru") || a.name.localeCompare(b.name, "ru"));
 }
 
@@ -559,7 +579,8 @@ function allDebts() {
 
 function syncFilters() {
   const currentClass = selectedClass();
-  const currentPoem = selectedPoemId();
+  const currentStudent = selectedStudentId();
+  const query = studentSearchQuery();
   const classes = [...new Set(state.students.map((student) => student.className).filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "ru"));
 
@@ -568,11 +589,22 @@ function syncFilters() {
     .join("")}`;
   els.classFilter.value = classes.includes(currentClass) ? currentClass : "";
 
-  const poems = state.poems.slice().sort((a, b) => a.gradeLevel.localeCompare(b.gradeLevel, "ru") || a.title.localeCompare(b.title, "ru"));
-  els.poemFilter.innerHTML = poems.length
-    ? poems.map((poem) => `<option value="${poem.id}">${escapeHtml(poem.gradeLevel)} кл. - ${escapeHtml(poem.title)}</option>`).join("")
-    : `<option value="">Нет стихов</option>`;
-  els.poemFilter.value = poems.some((poem) => poem.id === currentPoem) ? currentPoem : poems[0]?.id || "";
+  const classStudents = state.students
+    .filter((student) => query || !els.classFilter.value || student.className === els.classFilter.value)
+    .filter((student) => studentMatchesSearch(student, query))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+  els.studentFilter.innerHTML = `<option value="">Все ученики</option>${classStudents
+    .map((student) => `<option value="${student.id}">${escapeHtml(displayStudentName(student.name))}</option>`)
+    .join("")}`;
+  els.studentFilter.value = classStudents.some((student) => student.id === currentStudent) ? currentStudent : "";
+
+  const searchMatches = state.students
+    .filter((student) => studentMatchesSearch(student, query))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+    .slice(0, 20);
+  els.studentSearchList.innerHTML = searchMatches
+    .map((student) => `<option value="${escapeHtml(displayStudentName(student.name))}">${escapeHtml(student.className)}</option>`)
+    .join("");
 }
 
 function escapeHtml(value) {
@@ -626,9 +658,9 @@ function renderGradeCell(student, poem) {
 }
 
 function renderDebtors() {
-  const className = selectedClass();
+  const allowedStudentIds = new Set(filteredStudents().map((student) => student.id));
   const rows = allDebts()
-    .filter(({ student }) => !className || student.className === className)
+    .filter(({ student }) => allowedStudentIds.has(student.id))
     .sort((a, b) => a.student.className.localeCompare(b.student.className, "ru") || a.student.name.localeCompare(b.student.name, "ru"));
 
   els.debtorsBody.innerHTML = rows.length
@@ -645,28 +677,26 @@ function renderDebtors() {
 }
 
 function renderPoemReport() {
-  const poem = state.poems.find((item) => item.id === selectedPoemId());
-  if (!poem) {
-    els.poemReportBody.innerHTML = `<tr><td colspan="3">Выберите стих</td></tr>`;
-    return;
+  const rows = [];
+  for (const student of filteredStudents()) {
+    const poems = state.poems
+      .filter((poem) => poem.gradeLevel === classParallel(student.className))
+      .sort((a, b) => a.title.localeCompare(b.title, "ru"));
+    for (const poem of poems) {
+      rows.push({ student, poem, grade: gradeFor(student.id, poem.id) });
+    }
   }
 
-  const rows = state.students
-    .filter((student) => classParallel(student.className) === poem.gradeLevel)
-    .sort((a, b) => a.className.localeCompare(b.className, "ru") || a.name.localeCompare(b.name, "ru"));
-
   els.poemReportBody.innerHTML = rows.length
-    ? rows.map((student) => {
-        const grade = gradeFor(student.id, poem.id);
-        return `
-          <tr>
-            <td data-label="ФИО">${escapeHtml(displayStudentName(student.name))}</td>
-            <td data-label="Класс">${escapeHtml(student.className)}</td>
-            <td data-label="Оценка" class="${grade ? `grade-${grade}` : ""}">${grade || "Не сдал"}</td>
-          </tr>
-        `;
-      }).join("")
-    : `<tr><td data-label="" colspan="3">Нет учеников для этой параллели</td></tr>`;
+    ? rows.map(({ student, poem, grade }) => `
+        <tr>
+          <td data-label="ФИО">${escapeHtml(displayStudentName(student.name))}</td>
+          <td data-label="Класс">${escapeHtml(student.className)}</td>
+          <td data-label="Стих">${escapeHtml(poem.title)}</td>
+          <td data-label="Оценка" class="${grade ? `grade-${grade}` : ""}">${grade || "Не сдал"}</td>
+        </tr>
+      `).join("")
+    : `<tr><td data-label="" colspan="4">Нет данных по выбранным фильтрам</td></tr>`;
 }
 
 function renderPoems() {
@@ -790,17 +820,15 @@ function deletePoem(id) {
 }
 
 function exportWorkbook() {
-  const journalRows = [];
+  const poems = state.poems
+    .slice()
+    .sort((a, b) => a.gradeLevel.localeCompare(b.gradeLevel, "ru") || a.title.localeCompare(b.title, "ru"));
+  const journalRows = [
+    ["ФИО", "Класс", ...poems.map((poem) => `${poem.gradeLevel} кл. - ${poem.title}`)]
+  ];
+
   for (const student of state.students) {
-    const row = {
-      "ФИО": student.name,
-      "Класс": student.className
-    };
-    const poems = state.poems.filter((poem) => poem.gradeLevel === classParallel(student.className));
-    for (const poem of poems) {
-      row[`${poem.title} (${poem.author})`] = gradeFor(student.id, poem.id) || "";
-    }
-    journalRows.push(row);
+    journalRows.push([student.name, student.className, ...poems.map(() => "")]);
   }
 
   const debtRows = allDebts().map(({ student, poem }) => ({
@@ -825,7 +853,41 @@ function exportWorkbook() {
   }
 
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(journalRows), "Журнал");
+  const journalSheet = XLSX.utils.aoa_to_sheet(journalRows);
+  journalSheet["!cols"] = [
+    { wch: 32 },
+    { wch: 12 },
+    ...poems.map(() => ({ wch: 16 }))
+  ];
+  const headerStyle = {
+    font: { bold: true },
+    fill: { patternType: "solid", fgColor: { rgb: "E6F4F9" } },
+    alignment: { horizontal: "center", vertical: "center", wrapText: true }
+  };
+  const submittedStyle = {
+    fill: { patternType: "solid", fgColor: { rgb: "C6EFCE" } }
+  };
+  const missingStyle = {
+    fill: { patternType: "solid", fgColor: { rgb: "FFC7CE" } }
+  };
+
+  for (let column = 0; column < journalRows[0].length; column += 1) {
+    const address = XLSX.utils.encode_cell({ r: 0, c: column });
+    journalSheet[address].s = headerStyle;
+  }
+
+  state.students.forEach((student, studentIndex) => {
+    const rowIndex = studentIndex + 1;
+    poems.forEach((poem, poemIndex) => {
+      if (poem.gradeLevel !== classParallel(student.className)) return;
+      const columnIndex = poemIndex + 2;
+      const address = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
+      if (!journalSheet[address]) journalSheet[address] = { t: "s", v: "" };
+      journalSheet[address].s = gradeFor(student.id, poem.id) ? submittedStyle : missingStyle;
+    });
+  });
+
+  XLSX.utils.book_append_sheet(workbook, journalSheet, "Журнал");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(debtRows), "Должники");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(poemReportRows), "По стихам");
   XLSX.writeFile(workbook, "uchet-stihov.xlsx");
@@ -882,7 +944,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 els.classFilter.addEventListener("change", render);
-els.poemFilter.addEventListener("change", renderPoemReport);
+els.studentFilter.addEventListener("change", render);
+els.studentSearchInput.addEventListener("input", render);
 els.saveDataFileBtn.addEventListener("click", saveDataFile);
 els.loadDataFileBtn.addEventListener("click", loadDataFile);
 els.exportWorkbookBtn.addEventListener("click", exportWorkbook);

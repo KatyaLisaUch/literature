@@ -318,7 +318,7 @@ table {
 th,
 td {
   border-bottom: 1px solid var(--line);
-  padding: 10px;
+  padding: 8px 10px;
   text-align: left;
   vertical-align: middle;
 }
@@ -350,6 +350,7 @@ tr:last-child td {
 #journalTab th:not(.student-name),
 #journalTab td:not(.student-name) {
   width: 112px;
+  text-align: center;
 }
 
 #journalTab th:first-child,
@@ -369,6 +370,8 @@ tr:last-child td {
 .grade-select {
   width: 82px;
   min-width: 82px;
+  min-height: 38px;
+  padding: 6px 8px;
 }
 
 .grade-2 {
