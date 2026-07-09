@@ -7,9 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260709-menu2">
+    <link rel="stylesheet" href="styles.css?v=20260709-menu3">
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script>
-    <script src="app.js?v=20260709-menu2" defer></script>
+    <script src="app.js?v=20260709-menu3" defer></script>
   </head>
   <body>
     <header class="app-header">
@@ -20,7 +20,11 @@
       </div>
       <div class="header-actions">
         <div class="menu-shell">
-          <button id="menuToggleBtn" class="primary menu-toggle" type="button" aria-expanded="false" aria-controls="appMenu">Меню</button>
+          <button id="menuToggleBtn" class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="appMenu">
+            <span class="menu-toggle-line"></span>
+            <span class="menu-toggle-line"></span>
+            <span class="menu-toggle-line"></span>
+          </button>
           <div id="menuOverlay" class="menu-overlay" hidden></div>
           <div id="appMenu" class="app-menu" hidden>
             <div class="menu-head">
