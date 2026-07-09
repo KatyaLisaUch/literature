@@ -755,6 +755,9 @@ function setActiveTab(tabName) {
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.tab === tabName);
   });
+  document.querySelectorAll(".menu-item[data-tab]").forEach((item) => {
+    item.classList.toggle("active", item.dataset.tab === tabName);
+  });
   document.querySelectorAll(".tab-panel").forEach((panel) => {
     panel.classList.toggle("active", panel.id === tabPanelId(tabName));
   });
