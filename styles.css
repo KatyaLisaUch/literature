@@ -213,6 +213,37 @@ select {
   font-size: 18px;
 }
 
+.filters-panel {
+  padding: 12px;
+}
+
+.filters-panel h2 {
+  margin-bottom: 10px;
+}
+
+.filters-panel label {
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.filters-panel input,
+.filters-panel select {
+  min-height: 38px;
+  font-size: 15px;
+  padding: 6px 9px;
+}
+
+.filters-panel .search-results {
+  gap: 4px;
+  margin: -2px 0 8px;
+  padding: 4px;
+}
+
+.filters-panel .search-result {
+  min-height: 32px;
+  padding: 5px 7px;
+}
+
 .stack {
   display: grid;
   gap: 12px;
@@ -263,6 +294,14 @@ label {
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-bottom: 14px;
+}
+
+.debtors-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .search-results {
@@ -528,50 +567,36 @@ tr:last-child td {
     width: 150px;
   }
 
-  #debtorsTab table,
-  #poemReportTab table,
-  #poemsTab table {
+  .debtors-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  #debtorsTab table {
     min-width: 0;
   }
 
-  #debtorsTab thead,
-  #poemReportTab thead,
-  #poemsTab thead {
+  #debtorsTab thead {
     display: none;
   }
 
   #debtorsTab table,
   #debtorsTab tbody,
   #debtorsTab tr,
-  #debtorsTab td,
-  #poemReportTab table,
-  #poemReportTab tbody,
-  #poemReportTab tr,
-  #poemReportTab td,
-  #poemsTab table,
-  #poemsTab tbody,
-  #poemsTab tr,
-  #poemsTab td {
+  #debtorsTab td {
     display: block;
     width: 100%;
   }
 
-  #debtorsTab tr,
-  #poemReportTab tr,
-  #poemsTab tr {
+  #debtorsTab tr {
     border-bottom: 1px solid var(--line);
     padding: 10px 12px;
   }
 
-  #debtorsTab tr:last-child,
-  #poemReportTab tr:last-child,
-  #poemsTab tr:last-child {
+  #debtorsTab tr:last-child {
     border-bottom: 0;
   }
 
-  #debtorsTab td,
-  #poemReportTab td,
-  #poemsTab td {
+  #debtorsTab td {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -581,22 +606,12 @@ tr:last-child td {
     text-align: right;
   }
 
-  #debtorsTab td::before,
-  #poemReportTab td::before,
-  #poemsTab td::before {
+  #debtorsTab td::before {
     content: attr(data-label);
     flex: 0 0 42%;
     color: var(--muted);
     font-size: 13px;
     text-align: left;
-  }
-
-  #poemsTab td:last-child {
-    justify-content: flex-end;
-  }
-
-  #poemsTab td:last-child::before {
-    content: "";
   }
 
   .small-action {

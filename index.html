@@ -21,8 +21,6 @@
           <div id="appMenu" class="app-menu" hidden>
             <button class="menu-item" data-tab="journal" type="button">Журнал</button>
             <button class="menu-item" data-tab="debtors" type="button">Должники</button>
-            <button class="menu-item" data-tab="poem-report" type="button">По стиху</button>
-            <button class="menu-item" data-tab="poems" type="button">Список стихов</button>
             <button class="menu-item" data-tab="import" type="button">Импорт</button>
             <button class="menu-item" data-tab="add-poem" type="button">Добавить стих</button>
             <hr>
@@ -56,18 +54,6 @@
           <p id="cloudStatus" class="hint">Введите логин и пароль учителя.</p>
         </section>
 
-        <section id="adminSettingsPanel" class="panel" hidden>
-          <h2>Настройки администратора</h2>
-          <form id="adminSettingsForm" class="stack">
-            <label>
-              URL Google Apps Script
-              <input id="apiUrlInput" name="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
-            </label>
-            <button type="submit">Сохранить ссылку</button>
-          </form>
-          <p class="hint">Этот блок виден только учителю с логином katyalisa.</p>
-        </section>
-
         <section id="registerPanel" class="panel">
           <h2>Регистрация учителя</h2>
           <form id="registerForm" class="stack">
@@ -92,7 +78,7 @@
           <p class="hint">Регистрация доступна только с админ-паролем.</p>
         </section>
 
-        <section class="panel">
+        <section class="panel filters-panel">
           <h2>Фильтры</h2>
           <label>
             Поиск по всем ученикам
@@ -115,8 +101,6 @@
         <nav class="tabs" aria-label="Разделы">
           <button class="tab active" data-tab="journal">Журнал</button>
           <button class="tab" data-tab="debtors">Должники</button>
-          <button class="tab" data-tab="poem-report">По стиху</button>
-          <button class="tab" data-tab="poems">Список стихов</button>
         </nav>
 
         <section id="journalTab" class="tab-panel active">
@@ -129,52 +113,25 @@
         </section>
 
         <section id="debtorsTab" class="tab-panel">
+          <section class="debtors-toolbar">
+            <label>
+              Класс должников
+              <select id="debtorsClassFilter"></select>
+            </label>
+            <button id="exportDebtorsBtn" type="button" class="primary">Экспорт должников</button>
+          </section>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>ФИО</th>
                   <th>Класс</th>
-                  <th>Стих</th>
-                  <th>Автор</th>
+                  <th>Несданные стихи</th>
+                  <th>Количество</th>
                   <th>Срок</th>
                 </tr>
               </thead>
               <tbody id="debtorsBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="poemReportTab" class="tab-panel">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>ФИО</th>
-                  <th>Класс</th>
-                  <th>Стих</th>
-                  <th>Оценка</th>
-                </tr>
-              </thead>
-              <tbody id="poemReportBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="poemsTab" class="tab-panel">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Название</th>
-                  <th>Автор</th>
-                  <th>Параллель</th>
-                  <th>Начало</th>
-                  <th>Окончание</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="poemsBody"></tbody>
             </table>
           </div>
         </section>

@@ -28,11 +28,8 @@ const cloud = {
 const els = {
   loginForm: document.getElementById("loginForm"),
   loginPanel: document.getElementById("loginPanel"),
-  adminSettingsForm: document.getElementById("adminSettingsForm"),
-  adminSettingsPanel: document.getElementById("adminSettingsPanel"),
   registerForm: document.getElementById("registerForm"),
   registerPanel: document.getElementById("registerPanel"),
-  apiUrlInput: document.getElementById("apiUrlInput"),
   cloudStatus: document.getElementById("cloudStatus"),
   teacherBadge: document.getElementById("teacherBadge"),
   logoutBtn: document.getElementById("logoutBtn"),
@@ -48,15 +45,15 @@ const els = {
   studentSearchResults: document.getElementById("studentSearchResults"),
   classFilter: document.getElementById("classFilter"),
   studentFilter: document.getElementById("studentFilter"),
+  debtorsClassFilter: document.getElementById("debtorsClassFilter"),
   journalHead: document.getElementById("journalHead"),
   journalBody: document.getElementById("journalBody"),
   debtorsBody: document.getElementById("debtorsBody"),
-  poemReportBody: document.getElementById("poemReportBody"),
-  poemsBody: document.getElementById("poemsBody"),
   emptyState: document.getElementById("emptyState"),
   menuToggleBtn: document.getElementById("menuToggleBtn"),
   appMenu: document.getElementById("appMenu"),
   exportWorkbookBtn: document.getElementById("exportWorkbookBtn"),
+  exportDebtorsBtn: document.getElementById("exportDebtorsBtn"),
   clearDataBtn: document.getElementById("clearDataBtn")
 };
 
@@ -171,13 +168,11 @@ function loadCloudSettings() {
     cloud.teacherId = normalizeText(session.teacherId);
     cloud.login = normalizeText(session.login);
     cloud.teacherName = normalizeText(session.teacherName);
-    els.apiUrlInput.value = cloud.apiUrl;
     updateCloudStatus();
   } catch {
     localStorage.removeItem(CLOUD_SETTINGS_KEY);
     localStorage.removeItem(CLOUD_SESSION_KEY);
     cloud.apiUrl = DEFAULT_API_URL;
-    els.apiUrlInput.value = cloud.apiUrl;
     updateCloudStatus();
   }
 }
@@ -203,7 +198,6 @@ function clearCloudSession() {
 
 function updateCloudStatus(message) {
   const teacherLabel = cloud.teacherName || cloud.teacherId;
-  const isAdmin = !!cloud.token && cloud.login.toLowerCase() === "katyalisa";
   els.teacherBadge.hidden = !cloud.token;
   els.teacherBadge.textContent = cloud.token ? `Текущий учитель: ${teacherLabel}` : "";
 
@@ -219,12 +213,11 @@ function updateCloudStatus(message) {
   els.logoutBtn.hidden = !cloud.token;
   els.loginPanel.hidden = !!cloud.token;
   els.registerPanel.hidden = !!cloud.token;
-  els.adminSettingsPanel.hidden = !isAdmin;
 }
 
 async function apiRequest(action, payload = {}) {
   if (!cloud.apiUrl) {
-    throw new Error("Укажите URL Google Apps Script.");
+    throw new Error("Сервис Google Sheets не настроен.");
   }
 
   const response = await fetch(cloud.apiUrl, {
@@ -283,7 +276,7 @@ async function saveCloudNow() {
 }
 
 async function loginToCloud(formData) {
-  cloud.apiUrl = normalizeText(els.apiUrlInput.value) || cloud.apiUrl || DEFAULT_API_URL;
+  cloud.apiUrl = cloud.apiUrl || DEFAULT_API_URL;
   const login = normalizeText(formData.get("login"));
   const password = normalizeText(formData.get("password"));
 
@@ -305,34 +298,21 @@ async function loginToCloud(formData) {
     applyRemoteData(result.data);
     updateCloudStatus(`Вход выполнен: ${cloud.teacherName || login}.`);
     els.loginForm.reset();
-    els.apiUrlInput.value = cloud.apiUrl;
   } catch (error) {
     clearCloudSession();
     updateCloudStatus(`Ошибка входа: ${error.message}`);
   }
 }
 
-function saveAdminSettings(formData) {
-  if (cloud.login.toLowerCase() !== "katyalisa") return;
-  const apiUrl = normalizeText(formData.get("apiUrl"));
-  if (!apiUrl) {
-    alert("Укажите URL Google Apps Script.");
-    return;
-  }
-  cloud.apiUrl = apiUrl;
-  localStorage.setItem(CLOUD_SETTINGS_KEY, JSON.stringify({ apiUrl: cloud.apiUrl }));
-  updateCloudStatus("Ссылка Google Apps Script сохранена.");
-}
-
 async function registerTeacher(formData) {
-  cloud.apiUrl = normalizeText(els.apiUrlInput.value) || cloud.apiUrl || DEFAULT_API_URL;
+  cloud.apiUrl = cloud.apiUrl || DEFAULT_API_URL;
   const teacherName = normalizeText(formData.get("teacherName"));
   const login = normalizeText(formData.get("login"));
   const password = normalizeText(formData.get("password"));
   const adminPassword = normalizeText(formData.get("adminPassword"));
 
   if (!cloud.apiUrl) {
-    alert("Сначала укажите URL Google Apps Script в блоке Google Sheets.");
+    alert("Сервис Google Sheets не настроен.");
     return;
   }
 
@@ -531,6 +511,10 @@ function selectedStudentId() {
   return els.studentFilter.value;
 }
 
+function selectedDebtorsClass() {
+  return els.debtorsClassFilter.value;
+}
+
 function studentSearchQuery() {
   return normalizeText(els.studentSearchInput.value).toLowerCase();
 }
@@ -586,6 +570,22 @@ function allDebts() {
   return rows;
 }
 
+function debtorSummaryRows(className = "") {
+  const grouped = new Map();
+  for (const { student, poem } of allDebts()) {
+    if (className && student.className !== className) continue;
+    if (!grouped.has(student.id)) {
+      grouped.set(student.id, {
+        student,
+        poems: []
+      });
+    }
+    grouped.get(student.id).poems.push(poem);
+  }
+  return [...grouped.values()]
+    .sort((a, b) => a.student.className.localeCompare(b.student.className, "ru") || a.student.name.localeCompare(b.student.name, "ru"));
+}
+
 function syncFilters() {
   const currentClass = selectedClass();
   const currentStudent = selectedStudentId();
@@ -597,6 +597,12 @@ function syncFilters() {
     .map((className) => `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`)
     .join("")}`;
   els.classFilter.value = classes.includes(currentClass) ? currentClass : "";
+
+  const currentDebtorsClass = selectedDebtorsClass();
+  els.debtorsClassFilter.innerHTML = `<option value="">Все классы</option>${classes
+    .map((className) => `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`)
+    .join("")}`;
+  els.debtorsClassFilter.value = classes.includes(currentDebtorsClass) ? currentDebtorsClass : "";
 
   const classStudents = state.students
     .filter((student) => query || !els.classFilter.value || student.className === els.classFilter.value)
@@ -673,63 +679,19 @@ function renderGradeCell(student, poem) {
 }
 
 function renderDebtors() {
-  const allowedStudentIds = new Set(filteredStudents().map((student) => student.id));
-  const rows = allDebts()
-    .filter(({ student }) => allowedStudentIds.has(student.id))
-    .sort((a, b) => a.student.className.localeCompare(b.student.className, "ru") || a.student.name.localeCompare(b.student.name, "ru"));
+  const rows = debtorSummaryRows(selectedDebtorsClass());
 
   els.debtorsBody.innerHTML = rows.length
-    ? rows.map(({ student, poem }) => `
+    ? rows.map(({ student, poems }) => `
         <tr>
           <td data-label="ФИО">${escapeHtml(displayStudentName(student.name))}</td>
           <td data-label="Класс">${escapeHtml(student.className)}</td>
-          <td data-label="Стих">${escapeHtml(poem.title)}</td>
-          <td data-label="Автор">${escapeHtml(poem.author)}</td>
-          <td data-label="Срок">${escapeHtml(poem.endDate || "")}</td>
+          <td data-label="Стихи">${escapeHtml(poems.map((poem) => poem.title).join(", "))}</td>
+          <td data-label="Количество">${poems.length}</td>
+          <td data-label="Срок">${escapeHtml(poems.map((poem) => poem.endDate).filter(Boolean).join(", "))}</td>
         </tr>
       `).join("")
     : `<tr><td data-label="" colspan="5">Должников нет</td></tr>`;
-}
-
-function renderPoemReport() {
-  const rows = [];
-  for (const student of filteredStudents()) {
-    const poems = state.poems
-      .filter((poem) => poem.gradeLevel === classParallel(student.className))
-      .sort((a, b) => a.title.localeCompare(b.title, "ru"));
-    for (const poem of poems) {
-      rows.push({ student, poem, grade: gradeFor(student.id, poem.id) });
-    }
-  }
-
-  els.poemReportBody.innerHTML = rows.length
-    ? rows.map(({ student, poem, grade }) => `
-        <tr>
-          <td data-label="ФИО">${escapeHtml(displayStudentName(student.name))}</td>
-          <td data-label="Класс">${escapeHtml(student.className)}</td>
-          <td data-label="Стих">${escapeHtml(poem.title)}</td>
-          <td data-label="Оценка" class="${grade ? `grade-${grade}` : ""}">${grade || "Не сдал"}</td>
-        </tr>
-      `).join("")
-    : `<tr><td data-label="" colspan="4">Нет данных по выбранным фильтрам</td></tr>`;
-}
-
-function renderPoems() {
-  els.poemsBody.innerHTML = state.poems.length
-    ? state.poems
-        .slice()
-        .sort((a, b) => a.gradeLevel.localeCompare(b.gradeLevel, "ru") || a.title.localeCompare(b.title, "ru"))
-        .map((poem) => `
-          <tr>
-            <td data-label="Название">${escapeHtml(poem.title)}</td>
-            <td data-label="Автор">${escapeHtml(poem.author)}</td>
-            <td data-label="Параллель">${escapeHtml(poem.gradeLevel)}</td>
-            <td data-label="Начало">${escapeHtml(poem.startDate)}</td>
-            <td data-label="Окончание">${escapeHtml(poem.endDate)}</td>
-            <td data-label=""><button class="small-action danger" data-delete-poem="${poem.id}">Удалить</button></td>
-          </tr>
-        `).join("")
-    : `<tr><td data-label="" colspan="6">Список стихов пуст</td></tr>`;
 }
 
 function render() {
@@ -737,8 +699,6 @@ function render() {
   renderStats();
   renderJournal();
   renderDebtors();
-  renderPoemReport();
-  renderPoems();
 }
 
 function tabPanelId(tabName) {
@@ -864,19 +824,6 @@ function exportWorkbook() {
     "Дата окончания сдачи": poem.endDate
   }));
 
-  const poemReportRows = [];
-  for (const poem of state.poems) {
-    for (const student of state.students.filter((item) => classParallel(item.className) === poem.gradeLevel)) {
-      poemReportRows.push({
-        "Стих": poem.title,
-        "Автор": poem.author,
-        "ФИО": student.name,
-        "Класс": student.className,
-        "Оценка": gradeFor(student.id, poem.id) || "Не сдал"
-      });
-    }
-  }
-
   const workbook = XLSX.utils.book_new();
   const journalSheet = XLSX.utils.aoa_to_sheet(journalRows);
   journalSheet["!cols"] = [
@@ -914,8 +861,34 @@ function exportWorkbook() {
 
   XLSX.utils.book_append_sheet(workbook, journalSheet, "Журнал");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(debtRows), "Должники");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(poemReportRows), "По стихам");
   XLSX.writeFile(workbook, "uchet-stihov.xlsx");
+}
+
+function exportDebtorsWorkbook() {
+  const rows = debtorSummaryRows(selectedDebtorsClass()).map(({ student, poems }) => ({
+    "ФИО": student.name,
+    "Класс": student.className,
+    "Количество несданных": poems.length,
+    "Несданные стихи": poems.map((poem) => `${poem.title} (${poem.author})`).join("; "),
+    "Сроки": poems.map((poem) => poem.endDate).filter(Boolean).join("; ")
+  }));
+
+  if (!rows.length) {
+    alert("В выбранном классе должников нет.");
+    return;
+  }
+
+  const workbook = XLSX.utils.book_new();
+  const sheet = XLSX.utils.json_to_sheet(rows);
+  sheet["!cols"] = [
+    { wch: 34 },
+    { wch: 12 },
+    { wch: 18 },
+    { wch: 70 },
+    { wch: 32 }
+  ];
+  XLSX.utils.book_append_sheet(workbook, sheet, "Должники");
+  XLSX.writeFile(workbook, "dolzhniki-po-stiham.xlsx");
 }
 
 els.studentsFile.addEventListener("change", (event) => {
@@ -939,11 +912,6 @@ els.poemForm.addEventListener("submit", (event) => {
 els.loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
   loginToCloud(new FormData(event.currentTarget));
-});
-
-els.adminSettingsForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  saveAdminSettings(new FormData(event.currentTarget));
 });
 
 els.registerForm.addEventListener("submit", (event) => {
@@ -971,9 +939,11 @@ document.addEventListener("keydown", (event) => {
 els.classFilter.addEventListener("change", render);
 els.studentFilter.addEventListener("change", render);
 els.studentSearchInput.addEventListener("input", render);
+els.debtorsClassFilter.addEventListener("change", renderDebtors);
 els.saveDataFileBtn.addEventListener("click", saveDataFile);
 els.loadDataFileBtn.addEventListener("click", loadDataFile);
 els.exportWorkbookBtn.addEventListener("click", exportWorkbook);
+els.exportDebtorsBtn.addEventListener("click", exportDebtorsWorkbook);
 document.querySelectorAll("#appMenu button:not([data-tab])").forEach((button) => {
   button.addEventListener("click", closeMenu);
 });
