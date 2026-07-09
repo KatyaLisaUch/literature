@@ -45,6 +45,7 @@ const els = {
   poemForm: document.getElementById("poemForm"),
   studentSearchInput: document.getElementById("studentSearchInput"),
   studentSearchList: document.getElementById("studentSearchList"),
+  studentSearchResults: document.getElementById("studentSearchResults"),
   classFilter: document.getElementById("classFilter"),
   studentFilter: document.getElementById("studentFilter"),
   journalHead: document.getElementById("journalHead"),
@@ -544,6 +545,14 @@ function studentMatchesSearch(student, query) {
     || words.some((word) => word.startsWith(query));
 }
 
+function studentSearchMatches(query) {
+  if (!query) return [];
+  return state.students
+    .filter((student) => studentMatchesSearch(student, query))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+    .slice(0, 8);
+}
+
 function filteredStudents() {
   const className = selectedClass();
   const studentId = selectedStudentId();
@@ -598,12 +607,18 @@ function syncFilters() {
     .join("")}`;
   els.studentFilter.value = classStudents.some((student) => student.id === currentStudent) ? currentStudent : "";
 
-  const searchMatches = state.students
-    .filter((student) => studentMatchesSearch(student, query))
-    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
-    .slice(0, 20);
+  const searchMatches = studentSearchMatches(query);
   els.studentSearchList.innerHTML = searchMatches
     .map((student) => `<option value="${escapeHtml(displayStudentName(student.name))}">${escapeHtml(student.className)}</option>`)
+    .join("");
+  els.studentSearchResults.hidden = searchMatches.length === 0;
+  els.studentSearchResults.innerHTML = searchMatches
+    .map((student) => `
+      <button class="search-result" type="button" data-search-student-id="${student.id}">
+        <span>${escapeHtml(displayStudentName(student.name))}</span>
+        <small>${escapeHtml(student.className)}</small>
+      </button>
+    `)
     .join("");
 }
 
@@ -756,6 +771,16 @@ function toggleMenu() {
   } else {
     closeMenu();
   }
+}
+
+function chooseStudentFromSearch(studentId) {
+  const student = state.students.find((item) => item.id === studentId);
+  if (!student) return;
+  els.studentSearchInput.value = displayStudentName(student.name);
+  els.classFilter.value = student.className;
+  syncFilters();
+  els.studentFilter.value = student.id;
+  render();
 }
 
 async function importStudents(file) {
@@ -983,6 +1008,12 @@ document.addEventListener("click", (event) => {
   const id = event.target.dataset.deletePoem;
   if (!id) return;
   if (confirm("Удалить стих и связанные оценки?")) deletePoem(id);
+});
+
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-search-student-id]");
+  if (!button) return;
+  chooseStudentFromSearch(button.dataset.searchStudentId);
 });
 
 document.querySelectorAll(".tab").forEach((button) => {
