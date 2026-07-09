@@ -223,6 +223,7 @@ function updateCloudStatus(message) {
   els.loginPanel.hidden = !!cloud.token;
   els.registerPanel.hidden = !!cloud.token;
   els.sidebar.hidden = !!cloud.token;
+  document.body.classList.toggle("is-authenticated", !!cloud.token);
 }
 
 async function apiRequest(action, payload = {}) {
@@ -726,6 +727,7 @@ function tabPanelId(tabName) {
 }
 
 function setActiveTab(tabName) {
+  document.body.dataset.activeTab = tabName;
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.tab === tabName);
   });
@@ -1127,4 +1129,5 @@ removeLegacyUi();
 load();
 loadCloudSettings();
 render();
+setActiveTab("journal");
 refreshCloudData();
