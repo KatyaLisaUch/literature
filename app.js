@@ -880,12 +880,11 @@ function exportDebtorsWorkbook() {
     return;
   }
 
-  const maxDebtCount = Math.max(...debtors.map(({ poems }) => poems.length));
   const headers = [
     "ФИО",
     "Класс",
     "Количество несданных",
-    ...Array.from({ length: maxDebtCount }, (_, index) => `Стих ${index + 1}`)
+    "Несданные стихи"
   ];
   const rows = [
     headers,
@@ -893,12 +892,10 @@ function exportDebtorsWorkbook() {
       student.name,
       student.className,
       poems.length,
-      ...Array.from({ length: maxDebtCount }, (_, index) => {
-        const poem = poems[index];
-        if (!poem) return "";
+      poems.map((poem, index) => {
         const deadline = poem.endDate ? `, срок: ${poem.endDate}` : "";
-        return `${poem.title} (${poem.author}${deadline})`;
-      })
+        return `${index + 1}. ${poem.title} (${poem.author}${deadline})`;
+      }).join("\n")
     ])
   ];
 
@@ -908,7 +905,7 @@ function exportDebtorsWorkbook() {
     { wch: 34 },
     { wch: 12 },
     { wch: 18 },
-    ...Array.from({ length: maxDebtCount }, () => ({ wch: 34 }))
+    { wch: 70 }
   ];
   for (let column = 0; column < headers.length; column += 1) {
     const address = XLSX.utils.encode_cell({ r: 0, c: column });
@@ -918,6 +915,18 @@ function exportDebtorsWorkbook() {
       alignment: { horizontal: "center", vertical: "center", wrapText: true }
     };
   }
+  debtors.forEach(({ poems }, index) => {
+    const address = XLSX.utils.encode_cell({ r: index + 1, c: 3 });
+    if (sheet[address]) {
+      sheet[address].s = {
+        alignment: { vertical: "top", wrapText: true }
+      };
+    }
+  });
+  sheet["!rows"] = [
+    { hpt: 24 },
+    ...debtors.map(({ poems }) => ({ hpt: Math.max(28, poems.length * 18) }))
+  ];
   XLSX.utils.book_append_sheet(workbook, sheet, "Должники");
   const suffix = className ? `-${className}` : "-vse-klassy";
   XLSX.writeFile(workbook, `dolzhniki-po-stiham${suffix}.xlsx`);
