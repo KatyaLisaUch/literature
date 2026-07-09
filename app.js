@@ -26,6 +26,7 @@ const cloud = {
 };
 
 const els = {
+  sidebar: document.querySelector(".sidebar"),
   loginForm: document.getElementById("loginForm"),
   loginPanel: document.getElementById("loginPanel"),
   registerForm: document.getElementById("registerForm"),
@@ -55,7 +56,6 @@ const els = {
   appMenu: document.getElementById("appMenu"),
   exportWorkbookBtn: document.getElementById("exportWorkbookBtn"),
   exportDebtorsBtn: document.getElementById("exportDebtorsBtn"),
-  exportSelectedDebtorsBtn: document.getElementById("exportSelectedDebtorsBtn"),
   clearDataBtn: document.getElementById("clearDataBtn")
 };
 
@@ -222,6 +222,7 @@ function updateCloudStatus(message) {
   els.logoutBtn.hidden = !cloud.token;
   els.loginPanel.hidden = !!cloud.token;
   els.registerPanel.hidden = !!cloud.token;
+  els.sidebar.hidden = !!cloud.token;
 }
 
 async function apiRequest(action, payload = {}) {
@@ -618,7 +619,7 @@ function syncFilters() {
     .join("")}`;
   els.debtorsClassFilter.value = classes.includes(currentDebtorsClass) ? currentDebtorsClass : "";
 
-  els.exportClassFilter.innerHTML = `<option value="">Все классы</option>${classes
+  els.exportClassFilter.innerHTML = `<option value="">Выберите класс</option>${classes
     .map((className) => `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`)
     .join("")}`;
   els.exportClassFilter.value = classes.includes(currentExportClass) ? currentExportClass : "";
@@ -844,37 +845,52 @@ function mergeCellStyle(...styles) {
 }
 
 function exportWorkbook(className = selectedExportClass()) {
+  if (!className) {
+    alert("Выберите класс для экспорта.");
+    return;
+  }
+
+  const parallel = classParallel(className);
   const poems = state.poems
     .slice()
-    .filter((poem) => !className || poem.gradeLevel === classParallel(className))
-    .sort((a, b) => a.gradeLevel.localeCompare(b.gradeLevel, "ru") || a.title.localeCompare(b.title, "ru"));
+    .filter((poem) => poem.gradeLevel === parallel)
+    .sort((a, b) => a.title.localeCompare(b.title, "ru"));
   const students = state.students
-    .filter((student) => !className || student.className === className)
-    .sort((a, b) => a.className.localeCompare(b.className, "ru") || a.name.localeCompare(b.name, "ru"));
+    .filter((student) => student.className === className)
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+
+  if (!students.length) {
+    alert("В выбранном классе нет учеников.");
+    return;
+  }
+
+  if (!poems.length) {
+    alert("Для выбранного класса нет стихов.");
+    return;
+  }
+
   const journalRows = [
-    ["ФИО", "Класс", ...poems.map((poem) => `${poem.gradeLevel} кл. - ${poem.title}`)]
+    [`Класс: ${className}`],
+    ["Фамилия Имя", ...poems.map((poem) => `${poem.title}\n${poem.author}`)]
   ];
 
   for (const student of students) {
-    journalRows.push([student.name, student.className, ...poems.map(() => "")]);
+    journalRows.push([displayStudentName(student.name), ...poems.map(() => "")]);
   }
-
-  const debtRows = allDebts()
-    .filter(({ student }) => !className || student.className === className)
-    .map(({ student, poem }) => ({
-    "ФИО": student.name,
-    "Класс": student.className,
-    "Стих": poem.title,
-    "Автор": poem.author,
-    "Дата окончания сдачи": poem.endDate
-  }));
 
   const workbook = XLSX.utils.book_new();
   const journalSheet = XLSX.utils.aoa_to_sheet(journalRows);
   journalSheet["!cols"] = [
-    { wch: 32 },
-    { wch: 12 },
-    ...poems.map(() => ({ wch: 16 }))
+    { wch: 24 },
+    ...poems.map(() => ({ wch: 22 }))
+  ];
+  journalSheet["!merges"] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: poems.length } }
+  ];
+  journalSheet["!rows"] = [
+    { hpt: 26 },
+    { hpt: 44 },
+    ...students.map(() => ({ hpt: 24 }))
   ];
   const headerStyle = {
     font: { bold: true },
@@ -894,31 +910,37 @@ function exportWorkbook(className = selectedExportClass()) {
     border: excelBorderStyle(),
     alignment: { vertical: "center", wrapText: true }
   };
+  const titleStyle = {
+    font: { bold: true, sz: 14 },
+    fill: { patternType: "solid", fgColor: { rgb: "D9EAF7" } },
+    alignment: { horizontal: "center", vertical: "center" },
+    border: excelBorderStyle()
+  };
 
-  for (let column = 0; column < journalRows[0].length; column += 1) {
-    const address = XLSX.utils.encode_cell({ r: 0, c: column });
+  for (let column = 0; column <= poems.length; column += 1) {
+    const titleAddress = XLSX.utils.encode_cell({ r: 0, c: column });
+    if (!journalSheet[titleAddress]) journalSheet[titleAddress] = { t: "s", v: "" };
+    journalSheet[titleAddress].s = titleStyle;
+
+    const address = XLSX.utils.encode_cell({ r: 1, c: column });
     journalSheet[address].s = headerStyle;
   }
 
   students.forEach((student, studentIndex) => {
-    const rowIndex = studentIndex + 1;
-    [0, 1].forEach((columnIndex) => {
-      const address = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
-      if (journalSheet[address]) journalSheet[address].s = textCellStyle;
-    });
+    const rowIndex = studentIndex + 2;
+    const nameAddress = XLSX.utils.encode_cell({ r: rowIndex, c: 0 });
+    if (journalSheet[nameAddress]) journalSheet[nameAddress].s = textCellStyle;
+
     poems.forEach((poem, poemIndex) => {
-      if (poem.gradeLevel !== classParallel(student.className)) return;
-      const columnIndex = poemIndex + 2;
+      const columnIndex = poemIndex + 1;
       const address = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
       if (!journalSheet[address]) journalSheet[address] = { t: "s", v: "" };
       journalSheet[address].s = gradeFor(student.id, poem.id) ? submittedStyle : missingStyle;
     });
   });
 
-  XLSX.utils.book_append_sheet(workbook, journalSheet, "Журнал");
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(debtRows), "Должники");
-  const suffix = className ? `-${className}` : "-vse-klassy";
-  XLSX.writeFile(workbook, `uchet-stihov${suffix}.xlsx`);
+  XLSX.utils.book_append_sheet(workbook, journalSheet, className);
+  XLSX.writeFile(workbook, `uchet-stihov-${className}.xlsx`);
 }
 
 function exportDebtorsWorkbook(className = selectedDebtorsClass()) {
@@ -1049,7 +1071,6 @@ els.saveDataFileBtn.addEventListener("click", saveDataFile);
 els.loadDataFileBtn.addEventListener("click", loadDataFile);
 els.exportWorkbookBtn.addEventListener("click", () => exportWorkbook(selectedExportClass()));
 els.exportDebtorsBtn.addEventListener("click", exportDebtorsWorkbook);
-els.exportSelectedDebtorsBtn.addEventListener("click", () => exportDebtorsWorkbook(selectedExportClass()));
 document.querySelectorAll("#appMenu button:not([data-tab])").forEach((button) => {
   button.addEventListener("click", closeMenu);
 });
