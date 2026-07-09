@@ -1,6 +1,6 @@
 :root {
-  --void: #a8a6b7;
-  --page-bg: #a8a6b7;
+  --void: #cdccd0;
+  --page-bg: #cdccd0;
   --surface: #060317;
   --surface-strong: #10093a;
   --text: #f4f0ff;
@@ -16,7 +16,11 @@
   --rim: inset 0 0 24px rgba(255, 255, 255, 0.04);
   --rim-strong: inset 0 0 24px rgba(255, 255, 255, 0.06);
   --violet-rim: inset 0 -7px 11px rgba(164, 143, 255, 0.12);
-  --page-max: 1200px;
+  --page-max: 1680px;
+  --journal-bg: rgba(244, 240, 255, 0.72);
+  --journal-cell: rgba(244, 240, 255, 0.9);
+  --journal-head: rgba(205, 204, 208, 0.92);
+  --journal-text: #10093a;
   --radius-control: 5px;
   --radius-card: 16px;
   --radius-badge: 32px;
@@ -43,9 +47,9 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
-    radial-gradient(circle at 50% -10%, rgba(244, 240, 255, 0.55), transparent 34rem),
-    radial-gradient(circle at 8% 18%, rgba(145, 142, 160, 0.34), transparent 28rem),
-    radial-gradient(circle at 92% 22%, rgba(205, 204, 208, 0.42), transparent 26rem),
+    radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.72), transparent 34rem),
+    radial-gradient(circle at 8% 18%, rgba(244, 240, 255, 0.42), transparent 28rem),
+    radial-gradient(circle at 92% 22%, rgba(255, 255, 255, 0.36), transparent 26rem),
     var(--page-bg);
   color: var(--text);
   font-family: "Inter", "Inter V", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -369,7 +373,7 @@ select option {
   gap: 32px;
   width: min(100%, var(--page-max));
   margin: 0 auto;
-  padding: 20px 24px 108px;
+  padding: 20px 18px 108px;
 }
 
 .sidebar,
@@ -628,14 +632,14 @@ label {
   overflow: auto;
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-card);
-  background: rgba(6, 3, 23, 0.9);
+  background: var(--journal-bg);
   box-shadow: var(--rim);
   -webkit-overflow-scrolling: touch;
 }
 
 table {
   width: 100%;
-  min-width: 760px;
+  min-width: 980px;
   table-layout: fixed;
   border-collapse: collapse;
 }
@@ -657,8 +661,8 @@ th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: rgba(16, 9, 58, 0.96);
-  color: var(--text);
+  background: var(--journal-head);
+  color: var(--journal-text);
   font-size: 13px;
   font-weight: 500;
   line-height: 1.33;
@@ -666,8 +670,8 @@ th {
 }
 
 td {
-  background: rgba(6, 3, 23, 0.82);
-  color: var(--muted);
+  background: var(--journal-cell);
+  color: var(--journal-text);
   font-size: 14px;
   line-height: 1.43;
 }
@@ -679,13 +683,13 @@ tr:last-child td {
 .student-name {
   min-width: 180px;
   width: 180px;
-  color: var(--text);
+  color: var(--journal-text);
   font-weight: 500;
 }
 
 #journalTab th:not(.student-name),
 #journalTab td:not(.student-name) {
-  width: 120px;
+  width: 132px;
   text-align: center;
 }
 
@@ -694,18 +698,18 @@ tr:last-child td {
   position: sticky;
   left: 0;
   z-index: 2;
-  background: rgba(6, 3, 23, 0.98);
+  background: rgba(244, 240, 255, 0.98);
   box-shadow: 1px 0 0 var(--line-soft);
 }
 
 #journalTab th:first-child {
   z-index: 3;
-  background: rgba(16, 9, 58, 0.98);
+  background: var(--journal-head);
 }
 
 .grade-select {
-  width: 86px;
-  min-width: 86px;
+  width: 94px;
+  min-width: 94px;
   min-height: 36px;
   padding: 7px 9px;
 }
@@ -714,23 +718,23 @@ tr:last-child td {
 .grade-3,
 .grade-4,
 .grade-5 {
-  color: var(--text);
+  color: var(--journal-text);
 }
 
 .grade-2 {
-  background: var(--grade-2);
+  background: rgba(80, 70, 228, 0.16);
 }
 
 .grade-3 {
-  background: var(--grade-3);
+  background: rgba(147, 130, 255, 0.18);
 }
 
 .grade-4 {
-  background: var(--grade-4);
+  background: rgba(186, 156, 255, 0.22);
 }
 
 .grade-5 {
-  background: var(--grade-5);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .empty-state {
@@ -838,7 +842,7 @@ tr:last-child td {
   }
 
   #journalTab table {
-    min-width: 680px;
+    min-width: 760px;
   }
 
   #journalTab th:first-child,
