@@ -23,10 +23,10 @@
             <button class="menu-item" data-tab="debtors" type="button">Должники</button>
             <button class="menu-item" data-tab="import" type="button">Импорт</button>
             <button class="menu-item" data-tab="add-poem" type="button">Добавить стих</button>
+            <button class="menu-item" data-tab="export" type="button">Экспорт</button>
             <hr>
             <button id="loadDataFileBtn" class="menu-item" type="button">Загрузить базу</button>
             <button id="saveDataFileBtn" class="menu-item" type="button">Сохранить базу</button>
-            <button id="exportWorkbookBtn" class="menu-item" type="button">Экспорт в Excel</button>
             <button id="clearDataBtn" class="menu-item danger-text" type="button">Очистить данные</button>
             <button id="logoutBtn" class="menu-item" type="button" hidden>Выйти</button>
           </div>
@@ -78,26 +78,29 @@
           <p class="hint">Регистрация доступна только с админ-паролем.</p>
         </section>
 
-        <section class="panel filters-panel">
-          <h2>Фильтры</h2>
-          <label>
-            Поиск по всем ученикам
-            <input id="studentSearchInput" list="studentSearchList" placeholder="Начните вводить фамилию или имя">
-            <datalist id="studentSearchList"></datalist>
-          </label>
-          <div id="studentSearchResults" class="search-results" hidden></div>
-          <label>
-            Класс
-            <select id="classFilter"></select>
-          </label>
-          <label>
-            Ученик
-            <select id="studentFilter"></select>
-          </label>
-        </section>
       </aside>
 
       <section class="content">
+        <section class="panel filters-panel top-filters">
+          <h2>Фильтры</h2>
+          <div class="filters-grid">
+            <label>
+              Поиск по всем ученикам
+              <input id="studentSearchInput" list="studentSearchList" placeholder="Начните вводить фамилию или имя">
+              <datalist id="studentSearchList"></datalist>
+            </label>
+            <label>
+              Класс
+              <select id="classFilter"></select>
+            </label>
+            <label>
+              Ученик
+              <select id="studentFilter"></select>
+            </label>
+          </div>
+          <div id="studentSearchResults" class="search-results" hidden></div>
+        </section>
+
         <nav class="tabs" aria-label="Разделы">
           <button class="tab active" data-tab="journal">Журнал</button>
           <button class="tab" data-tab="debtors">Должники</button>
@@ -183,6 +186,21 @@
               </label>
               <button type="submit">Добавить</button>
             </form>
+          </section>
+        </section>
+
+        <section id="exportTab" class="tab-panel">
+          <section class="panel page-panel">
+            <h2>Экспорт</h2>
+            <label>
+              Класс для экспорта
+              <select id="exportClassFilter"></select>
+            </label>
+            <div class="export-actions">
+              <button id="exportWorkbookBtn" type="button" class="primary">Экспорт журнала</button>
+              <button id="exportSelectedDebtorsBtn" type="button">Экспорт должников</button>
+            </div>
+            <p class="hint">Если выбрать класс, в файл попадут только ученики этого класса. Если выбрать все классы, экспортируются все данные.</p>
           </section>
         </section>
 

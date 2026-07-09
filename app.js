@@ -46,6 +46,7 @@ const els = {
   classFilter: document.getElementById("classFilter"),
   studentFilter: document.getElementById("studentFilter"),
   debtorsClassFilter: document.getElementById("debtorsClassFilter"),
+  exportClassFilter: document.getElementById("exportClassFilter"),
   journalHead: document.getElementById("journalHead"),
   journalBody: document.getElementById("journalBody"),
   debtorsBody: document.getElementById("debtorsBody"),
@@ -54,6 +55,7 @@ const els = {
   appMenu: document.getElementById("appMenu"),
   exportWorkbookBtn: document.getElementById("exportWorkbookBtn"),
   exportDebtorsBtn: document.getElementById("exportDebtorsBtn"),
+  exportSelectedDebtorsBtn: document.getElementById("exportSelectedDebtorsBtn"),
   clearDataBtn: document.getElementById("clearDataBtn")
 };
 
@@ -522,6 +524,10 @@ function selectedDebtorsClass() {
   return els.debtorsClassFilter.value;
 }
 
+function selectedExportClass() {
+  return els.exportClassFilter.value;
+}
+
 function studentSearchQuery() {
   return normalizeText(els.studentSearchInput.value).toLowerCase();
 }
@@ -606,10 +612,16 @@ function syncFilters() {
   els.classFilter.value = classes.includes(currentClass) ? currentClass : "";
 
   const currentDebtorsClass = selectedDebtorsClass();
+  const currentExportClass = selectedExportClass();
   els.debtorsClassFilter.innerHTML = `<option value="">Все классы</option>${classes
     .map((className) => `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`)
     .join("")}`;
   els.debtorsClassFilter.value = classes.includes(currentDebtorsClass) ? currentDebtorsClass : "";
+
+  els.exportClassFilter.innerHTML = `<option value="">Все классы</option>${classes
+    .map((className) => `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`)
+    .join("")}`;
+  els.exportClassFilter.value = classes.includes(currentExportClass) ? currentExportClass : "";
 
   const classStudents = state.students
     .filter((student) => query || !els.classFilter.value || student.className === els.classFilter.value)
@@ -811,19 +823,45 @@ function deletePoem(id) {
   render();
 }
 
-function exportWorkbook() {
+function excelBorderStyle() {
+  return {
+    top: { style: "thin", color: { rgb: "808080" } },
+    bottom: { style: "thin", color: { rgb: "808080" } },
+    left: { style: "thin", color: { rgb: "808080" } },
+    right: { style: "thin", color: { rgb: "808080" } }
+  };
+}
+
+function mergeCellStyle(...styles) {
+  return styles.reduce((result, style) => {
+    Object.keys(style).forEach((key) => {
+      result[key] = typeof style[key] === "object" && !Array.isArray(style[key])
+        ? { ...(result[key] || {}), ...style[key] }
+        : style[key];
+    });
+    return result;
+  }, {});
+}
+
+function exportWorkbook(className = selectedExportClass()) {
   const poems = state.poems
     .slice()
+    .filter((poem) => !className || poem.gradeLevel === classParallel(className))
     .sort((a, b) => a.gradeLevel.localeCompare(b.gradeLevel, "ru") || a.title.localeCompare(b.title, "ru"));
+  const students = state.students
+    .filter((student) => !className || student.className === className)
+    .sort((a, b) => a.className.localeCompare(b.className, "ru") || a.name.localeCompare(b.name, "ru"));
   const journalRows = [
     ["ФИО", "Класс", ...poems.map((poem) => `${poem.gradeLevel} кл. - ${poem.title}`)]
   ];
 
-  for (const student of state.students) {
+  for (const student of students) {
     journalRows.push([student.name, student.className, ...poems.map(() => "")]);
   }
 
-  const debtRows = allDebts().map(({ student, poem }) => ({
+  const debtRows = allDebts()
+    .filter(({ student }) => !className || student.className === className)
+    .map(({ student, poem }) => ({
     "ФИО": student.name,
     "Класс": student.className,
     "Стих": poem.title,
@@ -841,13 +879,20 @@ function exportWorkbook() {
   const headerStyle = {
     font: { bold: true },
     fill: { patternType: "solid", fgColor: { rgb: "E6F4F9" } },
-    alignment: { horizontal: "center", vertical: "center", wrapText: true }
+    alignment: { horizontal: "center", vertical: "center", wrapText: true },
+    border: excelBorderStyle()
   };
   const submittedStyle = {
-    fill: { patternType: "solid", fgColor: { rgb: "C6EFCE" } }
+    fill: { patternType: "solid", fgColor: { rgb: "C6EFCE" } },
+    border: excelBorderStyle()
   };
   const missingStyle = {
-    fill: { patternType: "solid", fgColor: { rgb: "FFC7CE" } }
+    fill: { patternType: "solid", fgColor: { rgb: "FFC7CE" } },
+    border: excelBorderStyle()
+  };
+  const textCellStyle = {
+    border: excelBorderStyle(),
+    alignment: { vertical: "center", wrapText: true }
   };
 
   for (let column = 0; column < journalRows[0].length; column += 1) {
@@ -855,8 +900,12 @@ function exportWorkbook() {
     journalSheet[address].s = headerStyle;
   }
 
-  state.students.forEach((student, studentIndex) => {
+  students.forEach((student, studentIndex) => {
     const rowIndex = studentIndex + 1;
+    [0, 1].forEach((columnIndex) => {
+      const address = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
+      if (journalSheet[address]) journalSheet[address].s = textCellStyle;
+    });
     poems.forEach((poem, poemIndex) => {
       if (poem.gradeLevel !== classParallel(student.className)) return;
       const columnIndex = poemIndex + 2;
@@ -868,11 +917,11 @@ function exportWorkbook() {
 
   XLSX.utils.book_append_sheet(workbook, journalSheet, "Журнал");
   XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(debtRows), "Должники");
-  XLSX.writeFile(workbook, "uchet-stihov.xlsx");
+  const suffix = className ? `-${className}` : "-vse-klassy";
+  XLSX.writeFile(workbook, `uchet-stihov${suffix}.xlsx`);
 }
 
-function exportDebtorsWorkbook() {
-  const className = selectedDebtorsClass();
+function exportDebtorsWorkbook(className = selectedDebtorsClass()) {
   const debtors = debtorSummaryRows(className);
 
   if (!debtors.length) {
@@ -912,14 +961,25 @@ function exportDebtorsWorkbook() {
     sheet[address].s = {
       font: { bold: true },
       fill: { patternType: "solid", fgColor: { rgb: "E6F4F9" } },
-      alignment: { horizontal: "center", vertical: "center", wrapText: true }
+      alignment: { horizontal: "center", vertical: "center", wrapText: true },
+      border: excelBorderStyle()
     };
   }
   debtors.forEach(({ poems }, index) => {
+    [0, 1, 2].forEach((columnIndex) => {
+      const address = XLSX.utils.encode_cell({ r: index + 1, c: columnIndex });
+      if (sheet[address]) {
+        sheet[address].s = {
+          alignment: { vertical: "top", wrapText: true },
+          border: excelBorderStyle()
+        };
+      }
+    });
     const address = XLSX.utils.encode_cell({ r: index + 1, c: 3 });
     if (sheet[address]) {
       sheet[address].s = {
-        alignment: { vertical: "top", wrapText: true }
+        alignment: { vertical: "top", wrapText: true },
+        border: excelBorderStyle()
       };
     }
   });
@@ -981,10 +1041,15 @@ els.classFilter.addEventListener("change", render);
 els.studentFilter.addEventListener("change", render);
 els.studentSearchInput.addEventListener("input", render);
 els.debtorsClassFilter.addEventListener("change", renderDebtors);
+els.exportClassFilter.addEventListener("change", () => {
+  els.debtorsClassFilter.value = els.exportClassFilter.value;
+  renderDebtors();
+});
 els.saveDataFileBtn.addEventListener("click", saveDataFile);
 els.loadDataFileBtn.addEventListener("click", loadDataFile);
-els.exportWorkbookBtn.addEventListener("click", exportWorkbook);
+els.exportWorkbookBtn.addEventListener("click", () => exportWorkbook(selectedExportClass()));
 els.exportDebtorsBtn.addEventListener("click", exportDebtorsWorkbook);
+els.exportSelectedDebtorsBtn.addEventListener("click", () => exportDebtorsWorkbook(selectedExportClass()));
 document.querySelectorAll("#appMenu button:not([data-tab])").forEach((button) => {
   button.addEventListener("click", closeMenu);
 });

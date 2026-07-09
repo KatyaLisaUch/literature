@@ -217,13 +217,24 @@ select {
   padding: 12px;
 }
 
+.top-filters {
+  margin-bottom: 12px;
+}
+
 .filters-panel h2 {
   margin-bottom: 10px;
 }
 
+.filters-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(130px, 0.7fr) minmax(180px, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
 .filters-panel label {
   gap: 4px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .filters-panel input,
@@ -235,7 +246,7 @@ select {
 
 .filters-panel .search-results {
   gap: 4px;
-  margin: -2px 0 8px;
+  margin: 8px 0 0;
   padding: 4px;
 }
 
@@ -302,6 +313,13 @@ label {
   align-items: end;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .search-results {
@@ -502,6 +520,10 @@ tr:last-child td {
   .layout {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr;
   }
 
 }
