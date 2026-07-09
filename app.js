@@ -54,7 +54,11 @@ const els = {
   debtorsBody: document.getElementById("debtorsBody"),
   emptyState: document.getElementById("emptyState"),
   menuToggleBtn: document.getElementById("menuToggleBtn"),
+  menuCloseBtn: document.getElementById("menuCloseBtn"),
+  menuOverlay: document.getElementById("menuOverlay"),
   appMenu: document.getElementById("appMenu"),
+  filtersPanel: document.getElementById("filtersPanel"),
+  filtersToggleBtn: document.getElementById("filtersToggleBtn"),
   exportWorkbookBtn: document.getElementById("exportWorkbookBtn"),
   exportDebtorsBtn: document.getElementById("exportDebtorsBtn"),
   clearDataBtn: document.getElementById("clearDataBtn")
@@ -759,11 +763,15 @@ function setActiveTab(tabName) {
 
 function openMenu() {
   els.appMenu.hidden = false;
+  els.menuOverlay.hidden = false;
+  document.body.classList.add("menu-open");
   els.menuToggleBtn.setAttribute("aria-expanded", "true");
 }
 
 function closeMenu() {
   els.appMenu.hidden = true;
+  els.menuOverlay.hidden = true;
+  document.body.classList.remove("menu-open");
   els.menuToggleBtn.setAttribute("aria-expanded", "false");
 }
 
@@ -773,6 +781,12 @@ function toggleMenu() {
   } else {
     closeMenu();
   }
+}
+
+function toggleFilters() {
+  const isCollapsed = els.filtersPanel.classList.toggle("collapsed");
+  els.filtersToggleBtn.setAttribute("aria-expanded", String(!isCollapsed));
+  els.filtersToggleBtn.querySelector("strong").textContent = isCollapsed ? "Показать" : "Скрыть";
 }
 
 function chooseStudentFromSearch(studentId) {
@@ -1083,9 +1097,12 @@ els.logoutBtn.addEventListener("click", () => {
 });
 
 els.menuToggleBtn.addEventListener("click", toggleMenu);
+els.menuCloseBtn.addEventListener("click", closeMenu);
+els.menuOverlay.addEventListener("click", closeMenu);
+els.filtersToggleBtn.addEventListener("click", toggleFilters);
 
 document.addEventListener("click", (event) => {
-  if (event.target.closest(".menu-shell")) return;
+  if (event.target.closest(".menu-shell") || event.target.closest(".app-menu")) return;
   closeMenu();
 });
 

@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Учет сдачи стихов</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script>
     <script src="app.js" defer></script>
@@ -17,8 +20,13 @@
       </div>
       <div class="header-actions">
         <div class="menu-shell">
-          <button id="menuToggleBtn" class="primary" type="button" aria-expanded="false" aria-controls="appMenu">Меню</button>
+          <button id="menuToggleBtn" class="primary menu-toggle" type="button" aria-expanded="false" aria-controls="appMenu">Меню</button>
+          <div id="menuOverlay" class="menu-overlay" hidden></div>
           <div id="appMenu" class="app-menu" hidden>
+            <div class="menu-head">
+              <strong>Разделы</strong>
+              <button id="menuCloseBtn" class="icon-button" type="button" aria-label="Закрыть меню">×</button>
+            </div>
             <button class="menu-item" data-tab="journal" type="button">Журнал</button>
             <button class="menu-item" data-tab="debtors" type="button">Должники</button>
             <button class="menu-item" data-tab="import" type="button">Импорт</button>
@@ -81,8 +89,11 @@
       </aside>
 
       <section class="content">
-        <section class="panel filters-panel top-filters">
-          <h2>Фильтры</h2>
+        <section class="panel filters-panel top-filters collapsed" id="filtersPanel">
+          <button id="filtersToggleBtn" class="filters-toggle" type="button" aria-expanded="false">
+            <span>Фильтры</span>
+            <strong>Показать</strong>
+          </button>
           <div class="filters-grid">
             <label>
               Поиск по всем ученикам

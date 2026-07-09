@@ -1,12 +1,12 @@
 :root {
-  --bg: #f5f7fb;
+  --bg: #eef3f8;
   --surface: #ffffff;
-  --surface-2: #eef2f7;
-  --text: #1f2937;
-  --muted: #667085;
-  --line: #d9e0ea;
-  --primary: #146c94;
-  --primary-hover: #0f5a7c;
+  --surface-2: #f4f7fb;
+  --text: #172033;
+  --muted: #697586;
+  --line: #d8e0eb;
+  --primary: #0f766e;
+  --primary-hover: #115e59;
   --danger: #b42318;
   --danger-hover: #912018;
   --grade-2: #fee4e2;
@@ -25,9 +25,11 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 34rem),
+    linear-gradient(180deg, #f7fafc 0%, var(--bg) 100%);
   color: var(--text);
-  font-family: Arial, sans-serif;
+  font-family: "Inter", Arial, sans-serif;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -41,7 +43,7 @@ select,
 button {
   min-height: 44px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
@@ -60,7 +62,7 @@ button,
   justify-content: center;
   min-height: 44px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
@@ -104,7 +106,7 @@ select {
   width: 100%;
   min-height: 44px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 10px;
   background: #ffffff;
   color: var(--text);
   font-size: 16px;
@@ -116,15 +118,21 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 24px 28px;
+  padding: 22px 28px;
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  position: sticky;
+  top: 0;
+  z-index: 12;
 }
 
 .app-header h1 {
   margin: 0 0 6px;
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .app-header p {
@@ -157,17 +165,46 @@ select {
   position: relative;
 }
 
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(15, 23, 42, 0.38);
+}
+
 .app-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 20;
-  width: min(280px, calc(100vw - 28px));
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 31;
+  width: min(340px, 88vw);
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0 18px 18px 0;
   background: var(--surface);
-  box-shadow: 0 18px 38px rgba(31, 41, 55, 0.16);
-  padding: 8px;
+  box-shadow: 18px 0 48px rgba(15, 23, 42, 0.2);
+  padding: 18px;
+}
+
+.menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.menu-head strong {
+  font-size: 18px;
+}
+
+.icon-button {
+  min-height: 36px;
+  width: 36px;
+  border-radius: 10px;
+  font-size: 22px;
+  line-height: 1;
+  padding: 0;
 }
 
 .app-menu hr {
@@ -181,8 +218,11 @@ select {
   display: block;
   width: 100%;
   border: 0;
+  border-radius: 12px;
   background: transparent;
   text-align: left;
+  font-weight: 600;
+  padding: 10px 12px;
 }
 
 .menu-item:hover {
@@ -246,8 +286,9 @@ body[data-active-tab="add-poem"] .tabs {
 
 .panel {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 14px;
   background: var(--surface);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 }
 
 .panel {
@@ -268,8 +309,29 @@ body[data-active-tab="add-poem"] .tabs {
   margin-bottom: 12px;
 }
 
-.filters-panel h2 {
-  margin-bottom: 10px;
+.filters-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-weight: 700;
+  padding: 2px 0 10px;
+}
+
+.filters-toggle span {
+  font-size: 18px;
+}
+
+.filters-toggle strong {
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.filters-panel.collapsed .filters-grid,
+.filters-panel.collapsed .search-results {
+  display: none;
 }
 
 .filters-grid {
@@ -330,7 +392,7 @@ label {
   margin-top: 12px;
   margin-bottom: 0;
   border: 1px solid #b7dce8;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #e6f4f9;
   color: var(--primary);
   font-size: 14px;
@@ -374,7 +436,7 @@ label {
   gap: 6px;
   margin: -4px 0 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--surface);
   padding: 6px;
   box-shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
@@ -424,7 +486,7 @@ label {
 
 .tab.active {
   border-color: var(--primary);
-  background: #e6f4f9;
+  background: #dff7f3;
   color: var(--primary);
 }
 
@@ -439,7 +501,7 @@ label {
 .table-wrap {
   overflow: auto;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 14px;
   background: var(--surface);
   -webkit-overflow-scrolling: touch;
 }
@@ -555,12 +617,6 @@ tr:last-child td {
 
   .menu-shell,
   #menuToggleBtn {
-    width: 100%;
-  }
-
-  .app-menu {
-    left: 0;
-    right: auto;
     width: 100%;
   }
 
