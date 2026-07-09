@@ -711,7 +711,22 @@ tr:last-child td {
   width: 94px;
   min-width: 94px;
   min-height: 36px;
+  border-color: rgba(16, 9, 58, 0.18);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--journal-text);
+  box-shadow: none;
   padding: 7px 9px;
+}
+
+.grade-select:focus {
+  border-color: rgba(80, 70, 228, 0.46);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(80, 70, 228, 0.14);
+}
+
+.grade-select option {
+  background: #ffffff;
+  color: var(--journal-text);
 }
 
 .grade-2,
