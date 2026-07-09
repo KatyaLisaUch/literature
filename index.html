@@ -7,17 +7,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20260709-menu3">
+    <link rel="stylesheet" href="styles.css?v=20260709-menu4">
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" defer></script>
-    <script src="app.js?v=20260709-menu3" defer></script>
+    <script src="app.js?v=20260709-menu4" defer></script>
   </head>
   <body>
     <header class="app-header">
-      <div>
-        <h1>Учет сдачи стихов</h1>
-        <p>Импорт учеников и стихов из Excel, оценки, должники и экспорт отчета.</p>
-        <p id="teacherBadge" class="teacher-badge" hidden></p>
-      </div>
       <div class="header-actions">
         <div class="menu-shell">
           <button id="menuToggleBtn" class="menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="appMenu">
@@ -43,6 +38,11 @@
             <button id="logoutBtn" class="menu-item" type="button" hidden>Выйти</button>
           </div>
         </div>
+      </div>
+      <div class="header-title">
+        <h1>Учет сдачи стихов</h1>
+        <p>Импорт учеников и стихов из Excel, оценки, должники и экспорт отчета.</p>
+        <p id="teacherBadge" class="teacher-badge" hidden></p>
       </div>
     </header>
     <input id="dataFileInput" class="visually-hidden" type="file" accept=".json,application/json">
