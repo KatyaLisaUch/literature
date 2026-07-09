@@ -16,14 +16,27 @@
         <p id="teacherBadge" class="teacher-badge" hidden></p>
       </div>
       <div class="header-actions">
-        <button id="logoutBtn" hidden>Выйти</button>
-        <button id="loadDataFileBtn">Загрузить базу</button>
-        <button id="saveDataFileBtn">Сохранить базу</button>
-        <button id="exportWorkbookBtn" class="primary">Экспорт в Excel</button>
-        <button id="clearDataBtn" class="danger">Очистить данные</button>
+        <div class="menu-shell">
+          <button id="menuToggleBtn" class="primary" type="button" aria-expanded="false" aria-controls="appMenu">Меню</button>
+          <div id="appMenu" class="app-menu" hidden>
+            <button class="menu-item" data-tab="journal" type="button">Журнал</button>
+            <button class="menu-item" data-tab="debtors" type="button">Должники</button>
+            <button class="menu-item" data-tab="poem-report" type="button">По стиху</button>
+            <button class="menu-item" data-tab="poems" type="button">Список стихов</button>
+            <button class="menu-item" data-tab="import" type="button">Импорт</button>
+            <button class="menu-item" data-tab="add-poem" type="button">Добавить стих</button>
+            <hr>
+            <button id="loadDataFileBtn" class="menu-item" type="button">Загрузить базу</button>
+            <button id="saveDataFileBtn" class="menu-item" type="button">Сохранить базу</button>
+            <button id="exportWorkbookBtn" class="menu-item" type="button">Экспорт в Excel</button>
+            <button id="clearDataBtn" class="menu-item danger-text" type="button">Очистить данные</button>
+            <button id="logoutBtn" class="menu-item" type="button" hidden>Выйти</button>
+          </div>
+        </div>
       </div>
     </header>
     <input id="dataFileInput" class="visually-hidden" type="file" accept=".json,application/json">
+    <p id="dataFileStatus" class="visually-hidden"></p>
 
     <main class="layout">
       <aside class="sidebar">
@@ -80,59 +93,6 @@
         </section>
 
         <section class="panel">
-          <h2>Файл базы</h2>
-          <p id="dataFileStatus" class="hint">
-            База хранится в файле JSON. Сначала сохраните или загрузите файл базы.
-          </p>
-        </section>
-
-        <section class="panel">
-          <h2>Импорт</h2>
-          <div class="template-actions">
-            <a class="button-link" href="templates/students-template.xlsx" download>Шаблон учеников</a>
-            <a class="button-link" href="templates/poems-template.xlsx" download>Шаблон стихов</a>
-          </div>
-          <label class="file-control">
-            <span>Ученики Excel</span>
-            <input id="studentsFile" type="file" accept=".xlsx,.xls,.csv">
-          </label>
-          <p class="hint">Колонки: ФИО, класс</p>
-
-          <label class="file-control">
-            <span>Стихи Excel</span>
-            <input id="poemsFile" type="file" accept=".xlsx,.xls,.csv">
-          </label>
-          <p class="hint">Колонки: название, автор, класс, дата начала сдачи, дата окончания сдачи</p>
-        </section>
-
-        <section class="panel">
-          <h2>Добавить стих</h2>
-          <form id="poemForm" class="stack">
-            <label>
-              Название
-              <input name="title" required>
-            </label>
-            <label>
-              Автор
-              <input name="author" required>
-            </label>
-            <label>
-              Параллель
-              <input name="gradeLevel" placeholder="5" required>
-            </label>
-            <label>
-              Начало сдачи
-              <input name="startDate" type="date">
-            </label>
-            <label>
-              Окончание сдачи
-              <input name="endDate" type="date">
-            </label>
-            <button type="submit">Добавить</button>
-          </form>
-        </section>
-
-        <section class="panel">
           <h2>Фильтры</h2>
           <label>
             Класс
@@ -146,25 +106,6 @@
       </aside>
 
       <section class="content">
-        <section class="stats-grid" aria-label="Статистика">
-          <div class="stat">
-            <span>Ученики</span>
-            <strong id="studentsCount">0</strong>
-          </div>
-          <div class="stat">
-            <span>Стихи</span>
-            <strong id="poemsCount">0</strong>
-          </div>
-          <div class="stat">
-            <span>Оценки</span>
-            <strong id="gradesCount">0</strong>
-          </div>
-          <div class="stat">
-            <span>Долги</span>
-            <strong id="debtsCount">0</strong>
-          </div>
-        </section>
-
         <nav class="tabs" aria-label="Разделы">
           <button class="tab active" data-tab="journal">Журнал</button>
           <button class="tab" data-tab="debtors">Должники</button>
@@ -229,6 +170,56 @@
               <tbody id="poemsBody"></tbody>
             </table>
           </div>
+        </section>
+
+        <section id="importTab" class="tab-panel">
+          <section class="panel page-panel">
+            <h2>Импорт</h2>
+            <div class="template-actions">
+              <a class="button-link" href="templates/students-template.xlsx" download>Шаблон учеников</a>
+              <a class="button-link" href="templates/poems-template.xlsx" download>Шаблон стихов</a>
+            </div>
+            <label class="file-control">
+              <span>Ученики Excel</span>
+              <input id="studentsFile" type="file" accept=".xlsx,.xls,.csv">
+            </label>
+            <p class="hint">Колонки: ФИО, класс</p>
+
+            <label class="file-control">
+              <span>Стихи Excel</span>
+              <input id="poemsFile" type="file" accept=".xlsx,.xls,.csv">
+            </label>
+            <p class="hint">Колонки: название, автор, класс, дата начала сдачи, дата окончания сдачи</p>
+          </section>
+        </section>
+
+        <section id="addPoemTab" class="tab-panel">
+          <section class="panel page-panel">
+            <h2>Добавить стих</h2>
+            <form id="poemForm" class="stack">
+              <label>
+                Название
+                <input name="title" required>
+              </label>
+              <label>
+                Автор
+                <input name="author" required>
+              </label>
+              <label>
+                Параллель
+                <input name="gradeLevel" placeholder="5" required>
+              </label>
+              <label>
+                Начало сдачи
+                <input name="startDate" type="date">
+              </label>
+              <label>
+                Окончание сдачи
+                <input name="endDate" type="date">
+              </label>
+              <button type="submit">Добавить</button>
+            </form>
+          </section>
         </section>
 
         <p id="emptyState" class="empty-state">

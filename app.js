@@ -50,11 +50,9 @@ const els = {
   debtorsBody: document.getElementById("debtorsBody"),
   poemReportBody: document.getElementById("poemReportBody"),
   poemsBody: document.getElementById("poemsBody"),
-  studentsCount: document.getElementById("studentsCount"),
-  poemsCount: document.getElementById("poemsCount"),
-  gradesCount: document.getElementById("gradesCount"),
-  debtsCount: document.getElementById("debtsCount"),
   emptyState: document.getElementById("emptyState"),
+  menuToggleBtn: document.getElementById("menuToggleBtn"),
+  appMenu: document.getElementById("appMenu"),
   exportWorkbookBtn: document.getElementById("exportWorkbookBtn"),
   clearDataBtn: document.getElementById("clearDataBtn")
 };
@@ -74,6 +72,12 @@ function normalizeHeader(value) {
 function classParallel(className) {
   const match = normalizeText(className).match(/\d+/);
   return match ? match[0] : normalizeText(className);
+}
+
+function displayStudentName(fullName) {
+  const parts = normalizeText(fullName).split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return parts.join(" ");
+  return `${parts[0]} ${parts[1]}`;
 }
 
 function formatDate(value) {
@@ -205,7 +209,7 @@ function updateCloudStatus(message) {
   } else if (cloud.token) {
     els.cloudStatus.textContent = `Вход выполнен. Аккаунт: ${teacherLabel}.`;
   } else if (cloud.apiUrl) {
-    els.cloudStatus.textContent = "URL сохранен. Войдите под логином учителя.";
+    els.cloudStatus.textContent = "Введите логин и пароль учителя.";
   } else {
     els.cloudStatus.textContent = "Google Sheets не подключен.";
   }
@@ -281,7 +285,7 @@ async function loginToCloud(formData) {
   const password = normalizeText(formData.get("password"));
 
   if (!cloud.apiUrl || !login || !password) {
-    alert("Заполните URL скрипта, логин и пароль.");
+    alert("Заполните логин и пароль.");
     return;
   }
 
@@ -318,7 +322,7 @@ function saveAdminSettings(formData) {
 }
 
 async function registerTeacher(formData) {
-  cloud.apiUrl = normalizeText(els.apiUrlInput.value);
+  cloud.apiUrl = normalizeText(els.apiUrlInput.value) || cloud.apiUrl || DEFAULT_API_URL;
   const teacherName = normalizeText(formData.get("teacherName"));
   const login = normalizeText(formData.get("login"));
   const password = normalizeText(formData.get("password"));
@@ -580,12 +584,6 @@ function escapeHtml(value) {
 }
 
 function renderStats() {
-  const gradeCount = Object.keys(state.grades).length;
-  const debtCount = allDebts().length;
-  els.studentsCount.textContent = state.students.length;
-  els.poemsCount.textContent = state.poems.length;
-  els.gradesCount.textContent = gradeCount;
-  els.debtsCount.textContent = debtCount;
   els.emptyState.hidden = state.students.length > 0 || state.poems.length > 0;
 }
 
@@ -604,7 +602,7 @@ function renderJournal() {
   els.journalBody.innerHTML = students
     .map((student) => `
       <tr>
-        <td class="student-name">${escapeHtml(student.name)}</td>
+        <td class="student-name">${escapeHtml(displayStudentName(student.name))}</td>
         <td>${escapeHtml(student.className)}</td>
         ${poems.map((poem) => renderGradeCell(student, poem)).join("")}
       </tr>
@@ -636,7 +634,7 @@ function renderDebtors() {
   els.debtorsBody.innerHTML = rows.length
     ? rows.map(({ student, poem }) => `
         <tr>
-          <td data-label="ФИО">${escapeHtml(student.name)}</td>
+          <td data-label="ФИО">${escapeHtml(displayStudentName(student.name))}</td>
           <td data-label="Класс">${escapeHtml(student.className)}</td>
           <td data-label="Стих">${escapeHtml(poem.title)}</td>
           <td data-label="Автор">${escapeHtml(poem.author)}</td>
@@ -662,7 +660,7 @@ function renderPoemReport() {
         const grade = gradeFor(student.id, poem.id);
         return `
           <tr>
-            <td data-label="ФИО">${escapeHtml(student.name)}</td>
+            <td data-label="ФИО">${escapeHtml(displayStudentName(student.name))}</td>
             <td data-label="Класс">${escapeHtml(student.className)}</td>
             <td data-label="Оценка" class="${grade ? `grade-${grade}` : ""}">${grade || "Не сдал"}</td>
           </tr>
@@ -696,6 +694,38 @@ function render() {
   renderDebtors();
   renderPoemReport();
   renderPoems();
+}
+
+function tabPanelId(tabName) {
+  return `${tabName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())}Tab`;
+}
+
+function setActiveTab(tabName) {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.tab === tabName);
+  });
+  document.querySelectorAll(".tab-panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === tabPanelId(tabName));
+  });
+  closeMenu();
+}
+
+function openMenu() {
+  els.appMenu.hidden = false;
+  els.menuToggleBtn.setAttribute("aria-expanded", "true");
+}
+
+function closeMenu() {
+  els.appMenu.hidden = true;
+  els.menuToggleBtn.setAttribute("aria-expanded", "false");
+}
+
+function toggleMenu() {
+  if (els.appMenu.hidden) {
+    openMenu();
+  } else {
+    closeMenu();
+  }
 }
 
 async function importStudents(file) {
@@ -837,6 +867,18 @@ els.registerForm.addEventListener("submit", (event) => {
 els.logoutBtn.addEventListener("click", () => {
   clearCloudSession();
   updateCloudStatus("Вы вышли из Google Sheets. Локальные данные остались на экране.");
+  closeMenu();
+});
+
+els.menuToggleBtn.addEventListener("click", toggleMenu);
+
+document.addEventListener("click", (event) => {
+  if (event.target.closest(".menu-shell")) return;
+  closeMenu();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeMenu();
 });
 
 els.classFilter.addEventListener("change", render);
@@ -844,6 +886,9 @@ els.poemFilter.addEventListener("change", renderPoemReport);
 els.saveDataFileBtn.addEventListener("click", saveDataFile);
 els.loadDataFileBtn.addEventListener("click", loadDataFile);
 els.exportWorkbookBtn.addEventListener("click", exportWorkbook);
+document.querySelectorAll("#appMenu button:not([data-tab])").forEach((button) => {
+  button.addEventListener("click", closeMenu);
+});
 els.dataFileInput.addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -879,11 +924,12 @@ document.addEventListener("click", (event) => {
 
 document.querySelectorAll(".tab").forEach((button) => {
   button.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
-    document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active"));
-    button.classList.add("active");
-    document.getElementById(`${button.dataset.tab.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())}Tab`).classList.add("active");
+    setActiveTab(button.dataset.tab);
   });
+});
+
+document.querySelectorAll(".menu-item[data-tab]").forEach((button) => {
+  button.addEventListener("click", () => setActiveTab(button.dataset.tab));
 });
 
 load();
